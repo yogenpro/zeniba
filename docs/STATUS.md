@@ -1,19 +1,26 @@
 # Resume status
 
-## Public publication preflight — 2026-10-20
+## Public GitHub publication — 2026-10-20
 
-The operator explicitly authorized public GitHub publication of the strategy-neutral framework.
-Target: [yogenpro/zeniba](https://github.com/yogenpro/zeniba). There was no existing remote,
-repository at that target, or local commit history. The publication inventory contains 40
-public-capable source/doc/config/test files, no symlinks, and no matches for local secret values,
-private handoff pointers/pins or common credential patterns. Private handoffs, `.dev.vars`, local
-runtime notes, evidence/state, build output and dependencies remain ignored and excluded. This
-is a publication boundary check, not a comprehensive security audit or live-readiness claim.
+Published the strategy-neutral framework to the explicitly authorized **public** repository
+[yogenpro/zeniba](https://github.com/yogenpro/zeniba), with `main` tracking `origin/main`. There
+was no existing remote, repository at that target, or prior local commit history. The initial
+commit uses the operator's GitHub no-reply identity, not a private email address.
 
-Publication next step: create the public repository, commit/push the reviewed files only, verify
-public access and inspect synthetic CI. Application work next remains mock-only backup restore
-and failure-injection coverage as specified below. No license decision, live integration, cloud
-deployment or private-strategy publication is part of this authorization.
+Verified anonymous public API access and an exact match between the 40 reviewed local files and
+the published file tree. The publication inventory has no symlinks or matches for local secret
+values, private handoff pointers/pins or common credential patterns. Private handoffs, `.dev.vars`,
+local runtime notes, evidence/state, build output and dependencies remain ignored and excluded.
+This is a publication boundary check, not a comprehensive security audit or live-readiness claim.
+
+Pre-publication `npm run check` passed **49 tests, 0 failures, 0 skips**, with TypeScript and build
+checks passing. The initial GitHub [Synthetic checks run](https://github.com/yogenpro/zeniba/actions/runs/39478914202)
+completed successfully on the public repository. No production deployment or live provider,
+broker or Telegram service was used. Publication grants no private-strategy disclosure or live
+integration permission; no license has been selected.
+
+Exact next step: implement mock-only verified backup restore into an empty coordinator and
+failure-injection coverage, as specified in the application next-step section below.
 
 ## Mock-only vertical slice — 2026-10-20
 
