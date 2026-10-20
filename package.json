@@ -1,0 +1,28 @@
+{
+  "name": "zeniba",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0 <25" },
+  "scripts": {
+    "generate": "tsx scripts/generate.ts",
+    "typecheck": "npm run generate && tsc --noEmit",
+    "build": "npm run generate && tsx scripts/build.ts",
+    "test": "npm run build && node --import tsx --test tests/*.test.ts",
+    "check": "npm run typecheck && npm test",
+    "dev": "wrangler dev --local --ip 127.0.0.1",
+    "local:setup": "tsx scripts/local-setup.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261019.1",
+    "@types/node": "26.6.5",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "esbuild": "0.28.2",
+    "miniflare": "4.20260730.0",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "wrangler": "4.151.2"
+  }
+}

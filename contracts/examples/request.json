@@ -1,0 +1,17 @@
+{
+  "schema": "zeniba.strategy-proposal.v1",
+  "request_id": "toy-request-001",
+  "release_id": "0000000000000000000000000000000000000000000000000000000000000000",
+  "input_snapshot_id": "1111111111111111111111111111111111111111111111111111111111111111",
+  "requested_at": "2030-01-31T14:00:00Z",
+  "portfolio": {
+    "account_ref": "toy-account",
+    "as_of": "2030-01-30T23:59:00Z",
+    "observed_at": "2030-01-31T14:00:00Z",
+    "currency": "USD",
+    "settled_cash": "1000",
+    "positions": [],
+    "claims": [],
+    "open_orders": []
+  }
+}

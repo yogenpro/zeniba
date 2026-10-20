@@ -1,0 +1,38 @@
+{
+  "schema": "zeniba.strategy-proposal.v1",
+  "request_id": "toy-request-001",
+  "release_id": "0000000000000000000000000000000000000000000000000000000000000000",
+  "input_snapshot_id": "1111111111111111111111111111111111111111111111111111111111111111",
+  "request_hash": "69e604eef99532fc31de250f438dc87580649917b1823fcd55c1bead761df6c0",
+  "account_state_hash": "2d5f84156b885137a52c3528e8738e7d0d1f2daaab61fc4c85406f8ca20e7daa",
+  "account_ref": "toy-account",
+  "decision_at": "2030-01-30T23:59:00Z",
+  "execution_at": "2030-01-31T21:00:00Z",
+  "valid_until": "2030-01-31T20:00:00Z",
+  "mode": "shadow",
+  "requires_human_review": true,
+  "broker_execution_enabled": false,
+  "input_provenance": "synthetic",
+  "portfolio_value": "1000",
+  "spendable_cash": "1000",
+  "status": "proposed",
+  "orders": [{
+    "intent_id": "toy-intent-1",
+    "instrument_id": "TOY1",
+    "symbol": "FAKE",
+    "side": "buy",
+    "shares": "7",
+    "action": "entry",
+    "reference_price": "50",
+    "maximum_debit": "360",
+    "currency": "USD",
+    "execution_at": "2030-01-31T21:00:00Z"
+  }],
+  "blocks": [],
+  "warnings": [
+    "shadow_only_not_authorized_for_execution",
+    "upstream_input_provenance_not_certified",
+    "execution_order_type_not_selected"
+  ],
+  "proposal_id": "669513164fb760fa9a72ffbf48265281162b3cbcfcc1b45b37e3f1f8f8e41f17"
+}

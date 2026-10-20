@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zeniba:strategy-proposal:v1",
+  "title": "Strategy-neutral private proposal provider, shadow/manual-review v1",
+  "oneOf": [
+    {"$ref": "#/$defs/request"},
+    {"$ref": "#/$defs/proposal"},
+    {"$ref": "#/$defs/descriptor"},
+    {"$ref": "#/$defs/health"},
+    {"$ref": "#/$defs/error"}
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "inputDecimal": {"type": "string", "pattern": "^-?(?:0|[1-9][0-9]{0,29})(?:\\.[0-9]{1,30})?$"},
+    "decimal": {"type": "string", "pattern": "^-?(?:0|[1-9][0-9]{0,255})(?:\\.[0-9]{1,256})?$"},
+    "time": {"type": "string", "format": "date-time"},
+    "version": {"const": "zeniba.strategy-proposal.v1"},
+    "position": {
+      "type": "object", "additionalProperties": false,
+      "required": ["instrument_id", "shares", "role", "blocked_reason"],
+      "properties": {
+        "instrument_id": {"$ref": "#/$defs/id"},
+        "shares": {"$ref": "#/$defs/inputDecimal"},
+        "role": {"enum": ["primary", "passive"]},
+        "blocked_reason": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]}
+      }
+    },
+    "claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claim_ref", "amount", "direction"],
+      "properties": {
+        "claim_ref": {"$ref": "#/$defs/id"},
+        "amount": {"anyOf": [{"$ref": "#/$defs/inputDecimal"}, {"type": "null"}]},
+        "direction": {"enum": ["credit", "debit"]}
+      }
+    },
+    "portfolio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["account_ref", "as_of", "observed_at", "currency", "settled_cash", "positions", "claims", "open_orders"],
+      "properties": {
+        "account_ref": {"$ref": "#/$defs/id"},
+        "as_of": {"$ref": "#/$defs/time"},
+        "observed_at": {"$ref": "#/$defs/time"},
+        "currency": {"const": "USD"},
+        "settled_cash": {"$ref": "#/$defs/inputDecimal"},
+        "positions": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/position"}},
+        "claims": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/claim"}},
+        "open_orders": {"type": "array", "maxItems": 256, "description": "Any nonempty collection blocks the current provider; do not omit existing orders to obtain a proposal."}
+      }
+    },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "request_id", "release_id", "input_snapshot_id", "requested_at", "portfolio"],
+      "properties": {
+        "schema": {"$ref": "#/$defs/version"},
+        "request_id": {"$ref": "#/$defs/id"},
+        "release_id": {"$ref": "#/$defs/hash"},
+        "input_snapshot_id": {"$ref": "#/$defs/hash"},
+        "requested_at": {"$ref": "#/$defs/time"},
+        "portfolio": {"$ref": "#/$defs/portfolio"}
+      }
+    },
+    "order": {
+      "type": "object", "additionalProperties": false,
+      "required": ["intent_id", "instrument_id", "symbol", "side", "shares", "action", "reference_price", "maximum_debit", "currency", "execution_at"],
+      "properties": {
+        "intent_id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "instrument_id": {"$ref": "#/$defs/id"},
+        "symbol": {"$ref": "#/$defs/id"},
+        "side": {"enum": ["buy", "sell"]},
+        "shares": {"$ref": "#/$defs/decimal"},
+        "action": {"enum": ["entry", "exit", "resize"]},
+        "reference_price": {"anyOf": [{"$ref": "#/$defs/decimal"}, {"type": "null"}]},
+        "maximum_debit": {"anyOf": [{"$ref": "#/$defs/decimal"}, {"type": "null"}]},
+        "currency": {"const": "USD"},
+        "execution_at": {"$ref": "#/$defs/time"}
+      }
+    },
+    "block": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "instrument_id", "fatal"],
+      "properties": {
+        "code": {"$ref": "#/$defs/id"},
+        "instrument_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "fatal": {"type": "boolean"}
+      }
+    },
+    "proposal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "request_id", "release_id", "input_snapshot_id", "request_hash", "account_state_hash", "proposal_id", "account_ref", "decision_at", "execution_at", "valid_until", "mode", "requires_human_review", "broker_execution_enabled", "input_provenance", "portfolio_value", "spendable_cash", "status", "orders", "blocks", "warnings"],
+      "properties": {
+        "schema": {"$ref": "#/$defs/version"},
+        "request_id": {"$ref": "#/$defs/id"},
+        "release_id": {"$ref": "#/$defs/hash"},
+        "input_snapshot_id": {"$ref": "#/$defs/hash"},
+        "request_hash": {"$ref": "#/$defs/hash"},
+        "account_state_hash": {"$ref": "#/$defs/hash"},
+        "proposal_id": {"$ref": "#/$defs/hash"},
+        "account_ref": {"$ref": "#/$defs/id"},
+        "decision_at": {"$ref": "#/$defs/time"},
+        "execution_at": {"$ref": "#/$defs/time"},
+        "valid_until": {"$ref": "#/$defs/time"},
+        "mode": {"const": "shadow"},
+        "requires_human_review": {"const": true},
+        "broker_execution_enabled": {"const": false},
+        "input_provenance": {"enum": ["synthetic", "operator_supplied"]},
+        "portfolio_value": {"anyOf": [{"$ref": "#/$defs/decimal"}, {"type": "null"}]},
+        "spendable_cash": {"$ref": "#/$defs/decimal"},
+        "status": {"enum": ["proposed", "blocked"]},
+        "orders": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/order"}},
+        "blocks": {"type": "array", "maxItems": 1024, "items": {"$ref": "#/$defs/block"}},
+        "warnings": {"type": "array", "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "instrument": {
+      "type": "object", "additionalProperties": false,
+      "required": ["instrument_id", "symbol"],
+      "properties": {"instrument_id": {"$ref": "#/$defs/id"}, "symbol": {"$ref": "#/$defs/id"}}
+    },
+    "descriptor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "release_id", "input_snapshot_id", "decision_at", "execution_at", "valid_until", "input_provenance", "instruments"],
+      "properties": {
+        "schema": {"$ref": "#/$defs/version"},
+        "release_id": {"$ref": "#/$defs/hash"},
+        "input_snapshot_id": {"$ref": "#/$defs/hash"},
+        "decision_at": {"$ref": "#/$defs/time"},
+        "execution_at": {"$ref": "#/$defs/time"},
+        "valid_until": {"$ref": "#/$defs/time"},
+        "input_provenance": {"enum": ["synthetic", "operator_supplied"]},
+        "instruments": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/instrument"}}
+      }
+    },
+    "health": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "release_id", "contract_sha256", "mode", "status"],
+      "properties": {
+        "schema": {"$ref": "#/$defs/version"},
+        "release_id": {"$ref": "#/$defs/hash"},
+        "contract_sha256": {"$ref": "#/$defs/hash"},
+        "mode": {"const": "shadow"},
+        "status": {"const": "ok"}
+      }
+    },
+    "error": {
+      "type": "object", "additionalProperties": false, "required": ["error"],
+      "properties": {"error": {
+        "type": "object", "additionalProperties": false, "required": ["code"],
+        "properties": {"code": {"$ref": "#/$defs/id"}}
+      }}
+    }
+  }
+}
