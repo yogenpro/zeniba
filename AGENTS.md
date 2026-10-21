@@ -17,6 +17,10 @@ Update `docs/STATUS.md` with completed work, tests, blockers and the exact next 
   The operator authorized public GitHub publication of this strategy-neutral framework after
   implementation. Private strategy details and operational records remain excluded; publication
   does not authorize deployment, live integration or changes to any private strategy repository.
+- The operator subsequently authorized a mock-only Cloudflare Workers deployment using the private
+  infrastructure repository's ownership/review practice. Keep deployment configuration/secrets and
+  operational receipts private, alternate ingress disabled, and the owner view behind authentication.
+  This is not authorization to connect a provider/broker, real accounts, or live market data.
 - First release is manual-first, read/observe-only and shadow. No live brokerage connections,
   provider calls with real account data, production deployments, or order submit/replace/cancel
   until explicitly configured and authorized. Build all unblocked framework paths with mocks.

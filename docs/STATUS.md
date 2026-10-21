@@ -1,5 +1,23 @@
 # Resume status
 
+## Authorized mock-only Workers deployment preparation — 2026-10-21
+
+The operator separately authorized Cloudflare Workers hosting following the private infrastructure
+repository's practice. Application code/bindings/migrations/secrets stay with Wrangler; private
+infrastructure owns the custom domain, private R2 container and owner-only Access gate. No provider,
+broker, real account, market data, Telegram delivery or trade authorization is configured by this.
+
+Added a guarded, explicit-private-config deployment wrapper and offline configuration tests.
+`npm run check`: **51 passed, 0 failed, 0 skipped**, with typecheck/build passing. The wrapper
+rejects alternate ingress, live modes, extra routes/cron, logging, binding/migration drift and
+inline credential overrides. Public CI remains credential-free and non-deploying. All real account,
+resource, secret and deployment receipt values stay in ignored/operator-local files.
+
+Deployment next step: finish the private infrastructure review/apply, upload the reviewed mock
+revision only after the gate/storage exist, verify metadata and unauthenticated denial, and record
+any owner-authenticated live checks still outstanding. Application recovery work remains the
+mock-only verified restore/failure-injection work described below. See [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Public GitHub publication — 2026-10-20
 
 Published the strategy-neutral framework to the explicitly authorized **public** repository
