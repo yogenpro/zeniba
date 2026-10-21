@@ -11,6 +11,7 @@
     "test": "npm run build && node --import tsx --test tests/*.test.ts",
     "check": "npm run typecheck && npm test",
     "dev": "wrangler dev --local --ip 127.0.0.1",
+    "deploy": "tsx scripts/deploy.ts",
     "local:setup": "tsx scripts/local-setup.ts"
   },
   "dependencies": {},

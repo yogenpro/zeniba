@@ -20,8 +20,10 @@ glibc 2.35 or newer. For an isolated compatible binary/loader, Miniflare recogni
 of tracked files. Do not disable tests or substitute a fake SQL store to conceal incompatibility.
 
 `wrangler.jsonc` defines **local mock bindings**, not provisioned cloud resources. `workers_dev`
-and preview URLs are disabled. There is no deploy script, route, cron, live-provider config,
-OAuth integration or execution flag to turn on. `APP_MODE` other than `mock` fails closed.
+and preview URLs are disabled. There is no route, cron, live-provider config, OAuth integration
+or execution flag to turn on. `APP_MODE` other than `mock` fails closed. The separately authorized
+[deployment wrapper](DEPLOYMENT.md) requires an explicit ignored profile; it never deploys this
+local profile implicitly and is not invoked by public CI.
 
 ## Credentials and private views
 
@@ -39,8 +41,9 @@ The generated IDs are toys, not a configured bot. There is **no bot token or out
 both numeric identities. Only saved-proposal callback actions are accepted; free text, usernames,
 inline callbacks without a verifiable chat, and arbitrary commands cannot act on accounts.
 
-Do not expose the demo publicly. A production owner-auth design, private ingress, TLS, rate limits,
-credential rotation, monitoring and operational authorization remain separate work.
+Do not expose an ungated demo or use local toy credentials in a deployment. Authorized mock
+hosting additionally requires private owner-only ingress and independent deployment secrets.
+Real-account production auth/rate/rotation/monitoring readiness remains separate work.
 
 ## Owner API (all data synthetic)
 

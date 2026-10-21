@@ -5,15 +5,19 @@ private strategy provider, private deployment, private financial records.
 
 ## Current state
 
-A **local, mock-only shadow application** is implemented in TypeScript for Cloudflare Workers.
+A **mock-only shadow application** is implemented in TypeScript for Cloudflare Workers.
 It has an authenticated owner view, a serialized SQLite Durable Object, private R2 evidence and
 backup snapshots, immutable provider proposals, and version-bound Telegram webhook handling.
 Only synthetic accounts and a fixed toy provider are wired into the application.
 
 Public application source: [yogenpro/zeniba](https://github.com/yogenpro/zeniba).
 
-**No brokerage connection, live provider calls, order-writing capability or production deployment
-is configured. A shadow intent is not authorization for a real trade.**
+**No brokerage connection, live provider calls or order-writing capability is configured.
+A shadow intent is not authorization for a real trade.**
+
+The operator separately authorized hosting this mock app on Cloudflare Workers. See
+[deployment](docs/DEPLOYMENT.md) for the guarded controller-only process and [status](docs/STATUS.md)
+for actual deployment evidence and remaining owner checks. Public CI does not deploy.
 
 ## Run locally
 
@@ -63,4 +67,4 @@ illustrate transport only, not an investment strategy, real account, signal or p
 If `PRIVATE_HANDOFF.local.md` exists, read it locally. It is ignored intentionally and must never
 be copied into a public issue, commit, artifact or log. Deployment-local configuration, evidence,
 backups and credentials also remain ignored. Public source publication does not authorize private
-strategy disclosure, live integration or deployment.
+strategy disclosure or live integration. Hosting the mock app requires separate operator authority.
