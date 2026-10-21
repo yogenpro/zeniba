@@ -1,22 +1,42 @@
 # Resume status
 
-## Authorized mock-only Workers deployment preparation — 2026-10-21
+## Authorized mock-only Workers deployment — 2026-10-21
 
-The operator separately authorized Cloudflare Workers hosting following the private infrastructure
-repository's practice. Application code/bindings/migrations/secrets stay with Wrangler; private
-infrastructure owns the custom domain, private R2 container and owner-only Access gate. No provider,
-broker, real account, market data, Telegram delivery or trade authorization is configured by this.
+Deployed the reviewed, tested mock app at **https://zeniba.yogenpro.com**, behind owner-only
+Cloudflare Access and an independent owner bearer secret. This was explicitly authorized separately
+from source publication. No provider, broker, real account, market data, Telegram delivery, schedule
+or trade authorization was configured. All operational config, secrets, version IDs and deployment
+receipts remain ignored/operator-local, not in this public repository.
 
-Added a guarded, explicit-private-config deployment wrapper and offline configuration tests.
-`npm run check`: **51 passed, 0 failed, 0 skipped**, with typecheck/build passing. The wrapper
-rejects alternate ingress, live modes, extra routes/cron, logging, binding/migration drift and
-inline credential overrides. Public CI remains credential-free and non-deploying. All real account,
-resource, secret and deployment receipt values stay in ignored/operator-local files.
+Followed the private infrastructure ownership/review practice: Wrangler owns code/bindings/SQLite
+DO migration v1/secrets and closed alternate ingress. The private Terraform workflow owns the
+custom domain, private R2 container with prevent-destroy and hardened owner-only Access app. The
+bounded plan created the domain/bucket and imported the deliberately created/captured Access app;
+there were no unrelated changes/deletions. Both PRs' checks and merged-main checks passed, the
+private main workflow applied successfully, and the post-deploy account plan reports **No changes**
+with the Cloudflare audit passing. Merged deployment worktrees/branches were cleaned up.
 
-Deployment next step: finish the private infrastructure review/apply, upload the reviewed mock
-revision only after the gate/storage exist, verify metadata and unauthenticated denial, and record
-any owner-authenticated live checks still outstanding. Application recovery work remains the
-mock-only verified restore/failure-injection work described below. See [DEPLOYMENT.md](DEPLOYMENT.md).
+Application `npm run check`: **51 passed, 0 failed, 0 skipped**, with typecheck/build and guarded
+Wrangler dry-run passing. All **29 infrastructure suites** passed. The explicit-private-config
+wrapper rejects alternate ingress, live modes, extra routes/cron, logging, binding/migration drift
+and inline credential overrides; public CI remains credential-free and non-deploying.
+
+Verified the active version matches the controller upload, only the four expected mock/owner/DO/R2
+bindings exist, workers.dev and previews are disabled, the bucket has no public managed/custom
+object domain, and anonymous HTTPS requests to both `/` and `/api/state` receive the Access
+challenge (302), not app/account data. No edge bypass or service token was created for testing.
+
+**Verification limits:** the owner-authenticated remote UI/workflow/persistence check still needs
+an owner browser session. Local real-workerd/SQLite/R2 tests are not a substitute. Observability
+is explicitly disabled in the upload config; live readbacks confirm logpush off and no tail
+consumers, but the read API omits the native Workers Logs enabled flag, so independent live
+readback of that flag remains unverified. Do not describe either gap as fully checked.
+
+**Exact next step:** sign in through the owner Access identity, unlock with the privately stored
+owner credential, and validate only the synthetic proposal/observation/persistence workflow.
+Confirm the remaining logging setting without weakening ingress or sharing credentials. Then
+continue mock-only verified backup restore/failure-injection work below. Hosting is not a
+real-account or capital pilot. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Public GitHub publication — 2026-10-20
 
