@@ -33,8 +33,10 @@ mock-only mode, logging-off settings, exact code/migration/binding shape and abs
 routes, cron, provider or override fields. Actual upload requires an explicit matching account ID
 and existing API token; it never starts login or searches for a stronger credential. Terraform's
 AWS backend keys and GitHub tokens are removed from the Wrangler child environment. The wrapper
-never provisions infrastructure, writes DNS, installs a secret or enables a public preview.
-Public CI remains synthetic/credential-free and has no deployment job or production secrets.
+has no separate container/DNS provisioning or secret-installation path and never enables a public
+preview. The explicit code-owned SQLite migration may create its Durable Object namespace; it does
+not make Wrangler the owner of Terraform's resources. Public CI remains synthetic/credential-free
+and has no deployment job or production secrets.
 
 ## First installation and verification
 

@@ -15,9 +15,10 @@ Public application source: [yogenpro/zeniba](https://github.com/yogenpro/zeniba)
 **No brokerage connection, live provider calls or order-writing capability is configured.
 A shadow intent is not authorization for a real trade.**
 
-The operator separately authorized hosting this mock app on Cloudflare Workers. See
-[deployment](docs/DEPLOYMENT.md) for the guarded controller-only process and [status](docs/STATUS.md)
-for actual deployment evidence and remaining owner checks. Public CI does not deploy.
+The authorized hosted mock is at **https://zeniba.yogenpro.com**, protected by owner-only
+Cloudflare Access plus an independent owner credential. See [deployment](docs/DEPLOYMENT.md) for
+the guarded controller-only process and [status](docs/STATUS.md) for verification limits and the
+remaining signed-in owner check. Public CI does not deploy.
 
 ## Run locally
 

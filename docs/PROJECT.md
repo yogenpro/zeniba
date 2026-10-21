@@ -24,6 +24,9 @@ signals, automatic broker writes, margin funding, extra acquisition, or deployme
 by this handoff. No final license has been selected. After the mock implementation, the operator
 explicitly authorized public GitHub publication of the strategy-neutral application source. That
 authorization does not extend to private strategy material, financial records or deployment.
+A subsequent explicit request separately authorized hosting the **mock-only** app on Workers,
+following private infrastructure practice and keeping views owner-authenticated. It did not
+authorize a private provider/broker connection, real account/data use or a trading pilot.
 
 See [architecture](ARCHITECTURE.md), [contract](STRATEGY_PROVIDER_CONTRACT.md) and
 [implementation plan](IMPLEMENTATION_PLAN.md). Local private integration details, if supplied,
