@@ -17,6 +17,15 @@ service, allowing a Workers application to call a Python calculation running els
 - Permanent account evidence and normalized ledger, separating intent, user decisions and
   actual fills/transactions/actions. Do not infer execution from a button click.
 
+## Separate observation-only controller authority
+
+A subsequent explicit operator request permits developing and testing a ONE-empty-account
+Schwab observation probe, without touching actual holdings. The first deliverable is a
+controller-run OAuth/account-data client, not a change to the hosted mock or a financial pilot.
+Private configuration/owner consent is indispensable before live calls. No broker writes,
+funding, transfers, margin use, other-account fallback or provider/portfolio normalization.
+See [bounded runbook](SCHWAB_READ_ONLY.md); synthetic tests are not live authorization proof.
+
 ## Exclusions
 
 No proprietary strategy code, stock-selection assumptions, performance research, public real

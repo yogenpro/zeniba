@@ -17,8 +17,16 @@ A shadow intent is not authorization for a real trade.**
 
 The authorized hosted mock is at **https://zeniba.yogenpro.com**, protected by owner-only
 Cloudflare Access plus an independent owner credential. See [deployment](docs/DEPLOYMENT.md) for
-the guarded controller-only process and [status](docs/STATUS.md) for verification limits and the
-remaining signed-in owner check. Public CI does not deploy.
+the guarded controller-only process and [status](docs/STATUS.md) for verification limits. The
+owner reports the hosted view works; that is not an independent persistence/recovery audit.
+Public CI does not deploy.
+
+A separately authorized [Schwab observation-only controller probe](docs/SCHWAB_READ_ONLY.md)
+is implemented for ONE preselected empty account. It is NOT wired into the hosted app. OAuth
+and two fixed account-data GET routes are tested synthetically; private setup and explicit
+`--live` commands are required before any actual connection. No order/funding/transfer method,
+provider call or portfolio/cash normalization exists in this probe. Real tokens may themselves
+have broader capabilities; an empty account is not a substitute for access controls.
 
 ## Run locally
 

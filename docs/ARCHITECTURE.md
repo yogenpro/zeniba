@@ -51,6 +51,13 @@ Do not hardcode a particular strategy's monthly schedule into the generic applic
 A later write-capable executor would be separately authorized/reviewed, isolated from observation,
 and bound to explicit one-use approval of an account/plan/window. It is intentionally absent.
 
+The [separate Schwab controller probe](SCHWAB_READ_ONLY.md) is NOT an app ledger adapter. Its
+fixed OAuth and two GET-only endpoints verify consent for one pinned account and report bounded
+current observations with no portfolio/cutoff/settled-cash certification. Protected tokens and
+receipts stay outside Git on the operator controller, not in Worker bindings/DO/R2. The hosted
+app still has only mock transports. Schema/account/operator/consent gates must precede any live
+probe; the existence of source code does not establish a real account connection.
+
 ## Implemented local slice
 
 `src/worker.ts` serves an auth shell and gates private APIs/Telegram ingress. `src/coordinator.ts`

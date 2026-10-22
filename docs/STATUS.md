@@ -1,5 +1,53 @@
 # Resume status
 
+## Observation-only controller probe — offline implementation (2026-10-22)
+
+The operator reports the deployed owner view works and explicitly requests real-account tests
+without risking existing holdings. Treat this as an owner report, NOT independent authenticated
+UI/DO/R2/persistence certification. The bounded next scope is ONE privately selected empty
+account, observation only. No financial writes, funding, margin use, holdings-account fallback,
+provider calls, cloud deployment or changes to the hosted mock are authorized by this probe.
+Actual operator configuration/account details and answers remain private, not in this source.
+
+Implemented [controller runbook](SCHWAB_READ_ONLY.md), fixed-origin confidential OAuth and
+GET-only observer, exact broker-number lexeme parsing, single-account consent/identity checks,
+protected Linux24 local setup/token/evidence store, single-use expiring state, hidden TTY input,
+loopback-only callback, no redirects, bounded deadlines/body, redacted errors and explicit live
+opt-in. Additional consent blocks BEFORE account detail reads. Missing positions/unknown or
+nonzero balances block; margin buying power is never cash. The result is NOT a Portfolio: all
+certification/history/order/cutoff flags false, settled cash null, no real proposal. Unexpected
+holdings/balances are not returned as raw archived evidence. Only matched empty-current records
+may be saved outside Git in0600 files under0700, not in app DO/R2 state.
+
+A local exclusive lease serializes refresh and file updates; atomic/fsynced no-clobber creates
+and replacements reject bad ownership/modes/symlink/hardlink input. Refresh-pending barrier
+survives ambiguous network/persistence failure and requires explicit fresh OAuth, never silently
+retries a possibly consumed token. No stale-lock breaking. Public CI is synthetic/no credentials.
+Worker/coordinator/config/contract/dependency-lock bytes are unchanged; the built Worker contains
+neither the Schwab origin nor probe schema. Existing deployment guards still allow only mock.
+
+Verification: reviewed local `npm run check` passes **91 tests/0 failed/0 skipped**, including
+40 new probe/parser/OAuth/controller/filesystem/failure tests and all51 prior tests. Typecheck,
+bundle and actual local workerd/SQLite/R2 tests pass using the preexisting isolated compatible
+runtime, no system-library changes or remote runtime. First CF/Node Request type errors and
+a follow-on type-assertion formatting failure are retained privately with corrected checks.
+An ancillary source inventory also caught an untracked temporary dependency symlink (EISDIR);
+removed that link ONLY, clean-installed dependencies into an actual ignored directory, and
+repeated all91 tests successfully against this worktree's own binary with the same isolated
+loader. Corrected source inventory has17 regular files/no symlinks/secret-pattern hits/private
+paths; no staging/publication occurred at failure. No financial/runtime rule changed to pass.
+This is self-review plus tests, NOT an independent security audit or live Schwab proof.
+
+**Live calls so far: ZERO.** No app secret/token, account identifier or actual Schwab state has
+been read/received/configured by this work; no secret lookup, consent/login, credentialed request,
+provider call, R2 upload or deployment. Exact remaining owner step: review the probe, then run
+hidden local `setup` with the approved app's matching HTTPS loopback callback and the one empty
+account, followed by explicit `login --live`. Only the owner completes Schwab login/consent and
+pastes the final callback into the hidden terminal, never chat. Schema gaps remain blocked and
+need approved API documentation/review; do not relax them just to get a green empty result.
+Hosted integration, histories/claims/settlement, backup restore, monitoring and private-provider
+transport/current inputs remain separate gates. This probe is not a real-capital pilot.
+
 ## Authorized mock-only Workers deployment — 2026-10-21
 
 Deployed the reviewed, tested mock app at **https://zeniba.yogenpro.com**, behind owner-only

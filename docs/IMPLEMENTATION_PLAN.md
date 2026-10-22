@@ -25,7 +25,10 @@ and [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) to run it without credentials o
 5. **Private provider integration.** Use authenticated backend-only health/descriptor/proposal
    calls with pinned release and explicit input ID. Verify deployment/contract/clock boundary;
    actual current-input availability is supplied by the provider operator, not invented here.
-6. **Schwab observation integration, only when authorized.** Confirm app/account eligibility,
+6. **Schwab observation integration, only when authorized.** A separate first-stage controller
+   probe is now implemented/tested offline: [bounded runbook](SCHWAB_READ_ONLY.md). It is not
+   wired into the hosted app/ledger or a portfolio adapter. Live private configuration/owner
+   consent and actual API schema checks remain gates. Confirm app/account eligibility,
    OAuth/callback/history limits and cash semantics. Handle reauthorization alerts, overlapping
    history fetches, stale monitoring and statement-backed gap recovery. Tokens stay private;
    do not bypass OAuth with password storage or browser scraping. No broker write endpoint.

@@ -8,7 +8,15 @@ export function byteLength(text: string): number { return encoder.encode(text).l
  * Numeric operational IDs may be safe integers; financial values must remain strings.
  * Fractional/unsafe numeric literals are rejected rather than rounded by JSON.parse.
  */
-export function parseJson(text: string): unknown {
+export function parseJson(text: string): unknown { return parse(text, false); }
+
+/** Broker JSON uses numeric money/share literals. Retain EVERY number's original lexeme as a
+ * string instead of passing it through binary floating point. Not a request/schema bypass:
+ * only the disconnected observation adapter calls this; ordinary parseJson stays strict.
+ */
+export function parseBrokerJson(text: string): unknown { return parse(text, true); }
+
+function parse(text: string, preserveNumbers: boolean): unknown {
   requireSafe(byteLength(text) <= MAX_BODY, 'payload_too_large', 413);
   let i = 0;
   const fail = (): never => { throw new SafeError('invalid_json', 400); };
@@ -61,6 +69,7 @@ export function parseJson(text: string): unknown {
     const match = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/.exec(text.slice(i));
     if (match) {
       i += match[0].length;
+      if (preserveNumbers) return match[0];
       const n = Number(match[0]);
       requireSafe(!/[.eE]/.test(match[0]) && Number.isSafeInteger(n), 'unsafe_json_number', 400);
       return n;
