@@ -173,7 +173,7 @@ test('denied or malformed callbacks consume the login and remove the protected a
   const f = fixture(); try {
     f.store.create('config.json', config()); let count = 0;
     await assert.rejects(runController('login', f.store, { hidden: async () => 'https://other.invalid/?code=toy', notice: () => {} },
-      async () => { count++; throw new Error('No network'); }, () => NOW), code('invalid_schwab_oauth_callback'));
+      async () => { count++; throw new Error('No network'); }, () => NOW), code('schwab_callback_origin_mismatch'));
     assert.equal(count, 0); assert.equal(f.store.exists('authorization.html'), false); assert.equal(f.store.exists('token.json'), false);
   } finally { f.clean(); }
 });

@@ -140,6 +140,66 @@ test('OAuth emits a high-entropy single-use state and only the fixed confidentia
   const body = new URLSearchParams(await seen!.text()); assert.equal(body.get('code'), 'toy-code@'); assert.equal(body.get('grant_type'), 'authorization_code');
   await assert.rejects(client.exchange(app().redirect_uri + '?code=toy&state=' + url.searchParams.get('state')), code('schwab_oauth_state_unavailable'));
 });
+test('Schwab session callback is accepted but only the once-decoded code reaches token exchange', async () => {
+  let seen: Request | undefined;
+  const oauth = new SchwabOAuth(app(), async request => { seen = request; return response(tokenResponse()); }, () => NOW);
+  const state = new URL(oauth.begin().authorization_url).searchParams.get('state');
+  const callback = `${app().redirect_uri}?code=toy%2Bcode%2540%40&session=toy-session%2B%3D&state=${state}`;
+  await oauth.exchange(callback);
+  const body = new URLSearchParams(await seen!.text());
+  assert.equal(body.get('code'), 'toy+code%40@'); assert.equal(body.has('session'), false);
+  assert.equal(body.has('state'), false); assert.equal([...body.keys()].length, 3);
+});
+test('only surrounding ASCII clipboard whitespace is trimmed, without changing callback contents', async () => {
+  const oauth = new SchwabOAuth(app(), async () => response(tokenResponse()), () => NOW);
+  const state = new URL(oauth.begin().authorization_url).searchParams.get('state');
+  await oauth.exchange(` \t${app().redirect_uri}?code=toy-code&session=toy&state=${state}\r\n `);
+});
+test('Schwab session never substitutes for the active matching OAuth state', async () => {
+  let calls = 0;
+  for (const suffix of ['', '&state=wrong', '&state=']) {
+    const oauth = new SchwabOAuth(app(), async () => { calls++; return response(tokenResponse()); }, () => NOW);
+    const state = new URL(oauth.begin().authorization_url).searchParams.get('state');
+    await assert.rejects(oauth.exchange(`${app().redirect_uri}?code=toy&session=${state}${suffix}`), code('schwab_oauth_state_mismatch'));
+  }
+  assert.equal(calls, 0);
+});
+test('callback shape failures report fixed nonsecret reasons before any token request', async () => {
+  let calls = 0;
+  const variants: [string, (state: string) => string][] = [
+    ['schwab_callback_format_invalid', () => 'not-a-url'],
+    ['schwab_callback_format_invalid', s => `${app().redirect_uri}?code=toy code&state=${s}`],
+    ['schwab_callback_origin_mismatch', s => `https://other.invalid/return?code=toy&state=${s}`],
+    ['schwab_callback_path_mismatch', s => `https://callback.invalid/other?code=toy&state=${s}`],
+    ['schwab_callback_authority_invalid', s => `https://toy:password@callback.invalid/return?code=toy&state=${s}`],
+    ['schwab_callback_fragment_refused', s => `${app().redirect_uri}?code=toy&state=${s}#toy-secret`],
+    ['schwab_callback_duplicate_parameter', s => `${app().redirect_uri}?code=toy&state=${s}&session=a&ses%73ion=b`],
+    ['schwab_callback_unexpected_parameter', s => `${app().redirect_uri}?code=toy&state=${s}&toy-secret-key=value`]
+  ];
+  for (const [expected, make] of variants) {
+    const oauth = new SchwabOAuth(app(), async () => { calls++; return response(tokenResponse()); }, () => NOW);
+    const state = new URL(oauth.begin().authorization_url).searchParams.get('state')!;
+    await assert.rejects(oauth.exchange(make(state)), code(expected));
+    await assert.rejects(oauth.exchange(make(state)), code('schwab_oauth_state_unavailable'));
+  }
+  assert.equal(calls, 0);
+});
+test('ignored session metadata is single-valued bounded and cannot contain decoded control bytes', async () => {
+  let calls = 0;
+  for (const session of ['x'.repeat(8193), 'toy%0Asession', 'toy%00session']) {
+    const oauth = new SchwabOAuth(app(), async () => { calls++; return response(tokenResponse()); }, () => NOW);
+    const state = new URL(oauth.begin().authorization_url).searchParams.get('state');
+    await assert.rejects(oauth.exchange(`${app().redirect_uri}?code=toy&state=${state}&session=${session}`), code('schwab_callback_session_invalid'));
+  }
+  assert.equal(calls, 0);
+});
+test('callback diagnostics do not echo sensitive input even when the query key contains it', async () => {
+  const oauth = new SchwabOAuth(app(), async () => { throw new Error('No transport allowed'); }, () => NOW);
+  const state = new URL(oauth.begin().authorization_url).searchParams.get('state');
+  await assert.rejects(oauth.exchange(`${app().redirect_uri}?code=toy-sensitive-code&state=${state}&toy-sensitive-key=x`),
+    error => error instanceof Error && error.message === 'schwab_callback_unexpected_parameter'
+      && !error.message.includes('sensitive'));
+});
 test('OAuth callback origin/path, duplicate keys, state, denial and expiry all reject before HTTP', async () => {
   let calls = 0, now = NOW;
   const client = () => new SchwabOAuth(app(), async () => { calls++; return response(tokenResponse()); }, () => now);

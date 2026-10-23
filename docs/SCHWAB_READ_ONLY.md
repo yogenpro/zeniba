@@ -85,6 +85,38 @@ The profile accepts HTTPS callbacks only on127.0.0.1, localhost or::1; it must E
 approved app. This avoids sending a code through hosted app/edge logging or changing Access.
 Manual URL copy is an OAuth flow, not scraping/password automation. Do not automate consent.
 
+## Callback compatibility and private troubleshooting
+
+Schwab can add a `session` query parameter to its landing URL, as shown in this
+[public transcript of the portal OAuth reference](https://github.com/pashpashpash/schwab-cli/blob/main/docs/schwab-api/oauth.md).
+The parser accepts that one auxiliary parameter as bounded, single-valued metadata and ignores
+it. It is never forwarded, persisted, logged or accepted instead of our generated OAuth state.
+The direct official documentation can require authenticated access; this reference does not
+certify a particular app's permissions or the operator's exact callback contents.
+
+Only surrounding ASCII clipboard whitespace is trimmed; internal whitespace, backslashes,
+embedded credentials, fragments, duplicate/unknown query parameters and callback mismatches
+still fail closed. URLSearchParams decodes the code ONCE; never manually decode/rewrite it.
+
+The old generic `invalid_schwab_oauth_callback` is replaced by fixed, nonsecret reason codes:
+
+| Code | Private action |
+| --- | --- |
+| `schwab_callback_format_invalid` | Copy the entire final address, without quotes or internal line breaks. |
+| `schwab_callback_origin_mismatch` | Privately compare scheme, host and port to the configured/registered callback. localhost and127.0.0.1 are not interchangeable. |
+| `schwab_callback_path_mismatch` | Check the exact registered path; do not rewrite the returned URL to force a match. |
+| `schwab_callback_authority_invalid` / `schwab_callback_fragment_refused` | Do not include embedded credentials or a URL fragment. |
+| `schwab_callback_duplicate_parameter` / `schwab_callback_unexpected_parameter` | Do not concatenate URLs or add fields. Report only the safe code, never query keys/values. |
+| `schwab_callback_session_invalid` | Unsupported auxiliary metadata remains blocked; do not remove security checks. |
+| `schwab_oauth_state_mismatch` | Use the NEW page from the CURRENT login. Session does not replace state. If a fresh callback truly omits state, stop for protocol review, not CSRF bypass. |
+| `schwab_oauth_state_unavailable` | Expired/consumed challenge: start a fresh login and browser tab. |
+
+Failed validation consumes the challenge. Restart login and use the newly generated page/state,
+not a previous callback. No setup repetition, callback edit, credential sharing, TLS weakening
+or permission change is needed for the session-parameter compatibility fix. For diagnosis,
+share ONLY the safe error code—never the callback URL, authorization code/state/session,
+configuration, account number or credentials. No diagnostic command contacts the broker.
+
 ## Headless WSL: use your Windows browser
 
 A headless WSL shell does NOT require a Linux GUI for this manual flow. Keep the login command

@@ -1,5 +1,29 @@
 # Resume status
 
+## OAuth callback session compatibility and safe diagnosis — 2026-10-23
+
+Reproduced a parser bug with SYNTHETIC data: a Schwab-style callback containing auxiliary
+`session` was rejected by our code/state/error-only query allowlist with the generic
+`invalid_schwab_oauth_callback`. A public mirror of the portal OAuth reference includes this
+callback parameter; direct official fetch still403. No real callback/config/token/account data
+was requested/read. This is a confirmed compatibility defect, not proof of the precise cause
+of an individual operator failure whose URL was deliberately not inspected.
+
+Accept only the additional named `session` field as bounded, control-free, single-valued
+metadata; never forward/persist/log/use it as CSRF state. Matching mandatory generated state,
+registered origin/path, expiry/one-use challenge, duplicate/unknown parameter checks and all
+one-account/read-only/secret/trading controls remain. Trim surrounding ASCII clipboard whitespace
+only, never rewrite internal URL/code or decode twice. Fixed nonsecret diagnostic codes now
+separate bad format, origin/path, authority/fragment, duplicate/unknown query and session issues.
+No input values, dynamic query names, registered callback or secrets are echoed in errors.
+
+Six new regression/privacy/security tests failed before the fix and pass afterward. Full
+local typecheck/build plus **103 tests/0failed/0skipped** pass. Before-fix log retained privately.
+No agent-initiated live login/broker/provider request, no operator file contents read or modified,
+no production/infra change. The owner must start a NEW login/tab/state after a failed exchange;
+never replay an old callback or send its URL/code in chat. If it still fails, report ONLY the
+new safe error code. Missing/mismatched OAuth state remains blocked; session is not a workaround.
+
 ## Headless WSL OAuth browser handoff — 2026-10-23
 
 Added an instruction-only Windows-browser handoff to the existing manual controller login.

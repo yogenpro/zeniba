@@ -50,16 +50,26 @@ export class SchwabOAuth {
     const pending = this.challenge; this.challenge = null;
     const now = this.clock();
     requireSafe(pending && now >= pending.created && now < pending.expires, 'schwab_oauth_state_unavailable', 409);
-    requireSafe(typeof completedCallback === 'string' && completedCallback.length <= 16384
-      && !/[\s\\]/.test(completedCallback), 'invalid_schwab_oauth_callback', 400);
+    requireSafe(typeof completedCallback === 'string' && completedCallback.length <= 16384, 'schwab_callback_format_invalid', 400);
+    // Browser/terminal clipboard edges may contain ASCII whitespace. Never rewrite the URL
+    // itself, decode the whole callback or accept internal whitespace/backslash ambiguities.
+    const pasted = completedCallback.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, '');
+    requireSafe(pasted.length > 0 && !/[\s\\]/.test(pasted), 'schwab_callback_format_invalid', 400);
     let completed: URL;
-    try { completed = new URL(completedCallback); } catch { throw new SafeError('invalid_schwab_oauth_callback', 400); }
+    try { completed = new URL(pasted); } catch { throw new SafeError('schwab_callback_format_invalid', 400); }
     const expected = new URL(this.app.redirect_uri);
-    requireSafe(completed.origin === expected.origin && completed.pathname === expected.pathname
-      && !completed.username && !completed.password && !completed.hash, 'invalid_schwab_oauth_callback', 400);
+    requireSafe(!completed.username && !completed.password, 'schwab_callback_authority_invalid', 400);
+    requireSafe(completed.origin === expected.origin, 'schwab_callback_origin_mismatch', 400);
+    requireSafe(completed.pathname === expected.pathname, 'schwab_callback_path_mismatch', 400);
+    requireSafe(!completed.hash, 'schwab_callback_fragment_refused', 400);
     const params = completed.searchParams;
-    requireSafe([...params.keys()].every(k => ['code', 'state', 'error', 'error_description'].includes(k))
-      && [...new Set(params.keys())].every(k => params.getAll(k).length === 1), 'invalid_schwab_oauth_callback', 400);
+    requireSafe([...new Set(params.keys())].every(k => params.getAll(k).length === 1), 'schwab_callback_duplicate_parameter', 400);
+    requireSafe([...params.keys()].every(k => ['code', 'state', 'session', 'error', 'error_description'].includes(k)),
+      'schwab_callback_unexpected_parameter', 400);
+    // Schwab includes auxiliary session metadata. It is ignored, never logged, persisted or
+    // forwarded, and MUST NOT substitute for the independently generated OAuth state below.
+    const session = params.get('session');
+    requireSafe(session === null || (session.length <= 8192 && !/[\x00-\x1f\x7f]/.test(session)), 'schwab_callback_session_invalid', 400);
     requireSafe(params.has('state') && await equalSecret(params.get('state')!, pending.state), 'schwab_oauth_state_mismatch', 409);
     requireSafe(!params.has('error') && !params.has('error_description'), 'schwab_oauth_denied', 409);
     const code = params.get('code');
