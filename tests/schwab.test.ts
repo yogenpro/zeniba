@@ -4,7 +4,7 @@ import { parseBrokerJson, parseJson } from '../src/json';
 import { SchwabOAuth, validateApp, validateToken, type SchwabToken } from '../src/broker/schwab/oauth';
 import { SchwabObserver } from '../src/broker/schwab/observer';
 import { SCHWAB_ORIGIN, TOKEN_URL, ACCOUNT_NUMBERS_URL, observeRequest, validateSchwabRequest,
-  schwabText } from '../src/broker/schwab/transport';
+  schwabText, SchwabHTTPError } from '../src/broker/schwab/transport';
 import type { Transport } from '../src/types';
 import { code } from './helpers';
 
@@ -140,6 +140,66 @@ test('HTTP redirects, auth errors and transport exceptions reveal no broker body
       e => e instanceof Error && !e.message.includes('sensitive') && !e.message.includes(access));
   }
   await assert.rejects(schwabText(observeRequest(ACCOUNT_NUMBERS_URL, access), 'observe', async () => { throw new Error(access); }), code('schwab_unavailable'));
+});
+test('OAuth exchange rejection exposes only fixed stage status and a known protocol reason', async () => {
+  let calls = 0;
+  const oauth = new SchwabOAuth(app(), async () => { calls++; return response('{"error":"invalid_grant","error_description":"toy-secret-code-and-client-id","accountNumber":"00000001"}', 400); }, () => NOW);
+  const state = new URL(oauth.begin().authorization_url).searchParams.get('state');
+  await assert.rejects(oauth.exchange(`${app().redirect_uri}?code=toy-secret-code&state=${state}`), error => {
+    assert.ok(error instanceof SchwabHTTPError); assert.equal(error.code, 'schwab_rejected');
+    assert.deepEqual(error.diagnostic, { stage: 'oauth_exchange', http_status: 400, oauth_error: 'invalid_grant' });
+    assert.equal(JSON.stringify(error.diagnostic).includes('secret'), false); return true;
+  });
+  assert.equal(calls, 1);
+});
+test('refresh rejection is distinguished from exchange without weakening the existing auth error code', async () => {
+  const previous: SchwabToken = { access_token: access, refresh_token: 'toy-refresh', token_type: 'Bearer', issued_at: NOW, expires_at: NOW + 1000 };
+  const oauth = new SchwabOAuth(app(), async () => response('{"error":"invalid_client","error_description":"toy-private"}', 401), () => NOW);
+  await assert.rejects(oauth.refresh(previous), error => {
+    assert.ok(error instanceof SchwabHTTPError); assert.equal(error.code, 'schwab_reauthorization_required');
+    assert.deepEqual(error.diagnostic, { stage: 'oauth_refresh', http_status: 401, oauth_error: 'invalid_client' }); return true;
+  });
+});
+test('account diagnostics report mapping or details only and never consume private broker error bodies', async () => {
+  for (const [url, stage, status] of [[ACCOUNT_NUMBERS_URL, 'account_mapping', 429],
+    [`${SCHWAB_ORIGIN}/trader/v1/accounts/ToyHash0001?fields=positions`, 'account_details', 503]] as const) {
+    let read = false, canceled = false;
+    const transport: Transport = async () => new Response(new ReadableStream({ pull() { read = true; }, cancel() { canceled = true; } }, { highWaterMark: 0 }),
+      { status, headers: { 'Content-Type': 'application/json', 'X-Private-Header': 'toy-secret' } });
+    await assert.rejects(schwabText(observeRequest(url, access), 'observe', transport), error => {
+      assert.ok(error instanceof SchwabHTTPError); assert.deepEqual(error.diagnostic, { stage, http_status: status, oauth_error: null });
+      return true;
+    });
+    assert.equal(read, false); assert.equal(canceled, true);
+  }
+});
+test('unknown malformed oversized or non-JSON OAuth errors never echo untrusted values', async () => {
+  for (const [body, contentType] of [
+    ['{"error":"toy-secret-token","error_description":"toy-secret"}', 'application/json'],
+    ['{"error":"invalid_grant","error":"toy-secret"}', 'application/json'],
+    ['{"error":{"nested":"toy-secret"}}', 'application/json'],
+    ['<html>toy-secret</html>', 'text/html'], ['x'.repeat(262145), 'application/json']
+  ] as const) {
+    const previous: SchwabToken = { access_token: access, refresh_token: 'toy-refresh', token_type: 'Bearer', issued_at: NOW, expires_at: NOW + 1000 };
+    const oauth = new SchwabOAuth(app(), async () => new Response(body, { status: 400, headers: { 'Content-Type': contentType } }), () => NOW);
+    await assert.rejects(oauth.refresh(previous), error => {
+      assert.ok(error instanceof SchwabHTTPError); assert.equal(error.diagnostic.oauth_error, null);
+      assert.equal(JSON.stringify(error.diagnostic).includes('secret'), false); return true;
+    });
+  }
+});
+test('HTTP diagnostic constructor cannot reflect arbitrary stages statuses or reasons', () => {
+  for (const make of [() => new SchwabHTTPError('toy-secret' as any, 400), () => new SchwabHTTPError('oauth_exchange', 999),
+    () => new SchwabHTTPError('oauth_exchange', 400, 'toy-secret' as any)])
+    assert.throws(make, code('invalid_schwab_http_diagnostic'));
+});
+test('OAuth error body parsing shares the existing deadline and never triggers a retry', async () => {
+  let calls = 0, canceled = false;
+  const previous: SchwabToken = { access_token: access, refresh_token: 'toy-refresh', token_type: 'Bearer', issued_at: NOW, expires_at: NOW + 1000 };
+  const oauth = new SchwabOAuth(app(), async () => { calls++; return new Response(new ReadableStream({ cancel() { canceled = true; } }),
+    { status: 400, headers: { 'Content-Type': 'application/json' } }); }, () => NOW, 5);
+  await assert.rejects(oauth.refresh(previous), code('schwab_timeout'));
+  assert.equal(calls, 1); assert.equal(canceled, true);
 });
 test('deadline aborts stalled transport and oversized/invalid response bodies are bounded', async () => {
   let aborted = false;

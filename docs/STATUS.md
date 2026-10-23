@@ -1,5 +1,32 @@
 # Resume status
 
+## Nonsecret HTTP rejection diagnostics — 2026-10-23
+
+The generic `schwab_rejected` could not locate/status-classify a broker failure. Added bounded
+HTTP diagnostics with fixed stages oauth_exchange/oauth_refresh/account_mapping/account_details,
+HTTP status and ONLY an allowlisted OAuth protocol reason. Base safe error codes stay unchanged.
+CLI prints this small JSON and protected failed-operation receipts retain the same safe fields.
+No URL/account hash/header/correlation ID/body/description or arbitrary server text is exposed.
+Account error bodies are canceled UNREAD; only OAuth error JSON is privately parsed under the
+existing size/deadline bound to extract a known reason, with everything else discarded. Unknown/
+non-JSON/malformed/oversized errors reveal no value. No retry/redirect/permission relaxation.
+
+Local typecheck/build plus117 tests/0fail/0skip pass (8 new stage/status/whitelist/privacy/body-
+cancel/timeout/receipt/barrier tests). Initial test-tuple typing error is retained privately and
+corrected by a fixture type assertion only. One-account/GET-only/data-blocked/token retention/
+file/refresh-barrier/trading controls remain; no actual operator config/token/response/callback
+contents or credential are read and no live broker/provider/OAuth request is initiated here.
+Only existing NONSECRET operation receipts may be examined for fixed counts/error/stage; never
+ask for full financial/auth data. A historic generic rejection lacks status/reason, so do not
+infer invalid_grant/client/rate-limit/server cause without new safe evidence.
+
+Operator action: use a NEW current authorization page/callback and paste it promptly after
+Schwab redirects. The ten-minute local challenge is NOT a guarantee of broker code validity;
+short-lived/one-use codes can be refused. Share ONLY the new small diagnostic JSON/error code.
+400 invalid_grant at exchange can mean expired/used/invalid code; at refresh it is a separate
+authorization failure. Do not alter saved secrets, retry consumed codes or break refresh locks/
+barriers automatically. No independent live account/financial-readiness claim from these tests.
+
 ## Separate retained connection from incomplete portfolio data — 2026-10-23
 
 The operator explicitly approved retaining the verified single-account OAuth connection while

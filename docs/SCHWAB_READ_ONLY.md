@@ -154,6 +154,40 @@ or permission change is needed for the session-parameter compatibility fix. For 
 share ONLY the safe error code—never the callback URL, authorization code/state/session,
 configuration, account number or credentials. No diagnostic command contacts the broker.
 
+## HTTP rejections: share only the safe diagnostic
+
+The original `schwab_rejected` alone did not reveal which endpoint class or status failed.
+The controller now prints a small JSON error, for example (SYNTHETIC):
+
+```json
+{"error":"schwab_rejected","stage":"oauth_exchange","http_status":400,"oauth_error":"invalid_grant"}
+```
+
+Stages are fixed vocabulary: oauth_exchange, oauth_refresh, oauth_token, account_mapping or
+account_details. Status is an HTTP integer. OAuth reason is null or a known protocol label
+(such as invalid_grant or invalid_client), NEVER the server's description/body, a URL, account
+identifier/hash, header or correlation ID. Arbitrary reason strings are discarded. Account
+error bodies are not read. OAuth errors are size/deadline-bounded and privately parsed solely
+for an allowlisted reason; no raw response/log is preserved. The existing error classes, retry/
+redirect refusal, refresh-pending barrier and every financial/data restriction remain.
+
+| Safe evidence | Meaning / next action |
+| --- | --- |
+| oauth_exchange +400 +invalid_grant | Code may be expired, reused or otherwise invalid. Use a NEW login/tab/current state and paste promptly after redirect; don't retry the same callback. This is not proof of which code problem occurred. |
+| oauth_refresh +400 +invalid_grant | Refresh authorization failed; keep the barrier and reauthorize explicitly, never replay an old token automatically. |
+| invalid_client | Privately review the approved app key/secret/authentication; don't paste them in chat or replace values speculatively. |
+| 401/403 | Authentication/authorization was refused; stage matters. Do not expand account access or permissions as a guess. |
+| 429 | Rate-limit response; stop repeated attempts. There is no automatic retry loop. |
+| 5xx | Server/gateway failure is possible; do not infer invalid credentials or weaken validation. |
+| null/unknown reason | The safe data does not establish the cause. Report only this diagnostic for review, not a raw response. |
+
+The local ten-minute state deadline is not the broker's code lifetime. After reaching the final
+loopback callback, paste it into the waiting hidden prompt promptly. Failed exchange consumes
+our challenge; old callback/previous tab reuse is not a retry strategy. No setup repetition or
+secret change is justified by a generic error alone. If diagnosis needs past operation counts,
+read only the private operation receipts' whitelisted metadata locally—not config/token/auth
+files or financial response payloads. Never share full callbacks, keys, tokens or raw bodies.
+
 ## Headless WSL: use your Windows browser
 
 A headless WSL shell does NOT require a Linux GUI for this manual flow. Keep the login command

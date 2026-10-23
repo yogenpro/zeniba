@@ -3,6 +3,7 @@ import { requireSafe, safeFailure, SafeError } from '../src/errors';
 import { controllerArguments, runController, type OperatorIO } from './schwab-controller';
 import { SchwabStore } from './schwab-store';
 import { authorizationFileNotices } from './schwab-browser';
+import { SchwabHTTPError } from '../src/broker/schwab/transport';
 
 /** Real TTY only. Secret/callback/account input never echoes, appears in argv or reads a pipe. */
 function hidden(prompt: string): Promise<string> {
@@ -42,6 +43,8 @@ try {
   // fixed OAuth/GET-only egress policy first. No Worker/global-fetch default is changed.
   await runController(command, store, io, request => fetch(request), Date.now);
 } catch (error) {
-  console.error(safeFailure(error).code); // Fixed codes only; no callback/body/file/exception echo.
+  // Only fixed stage/status/known OAuth reason, never the server body/description or request.
+  console.error(error instanceof SchwabHTTPError
+    ? JSON.stringify({ error: safeFailure(error).code, ...error.diagnostic }) : safeFailure(error).code);
   process.exitCode = 1;
 }

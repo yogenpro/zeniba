@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { controllerArguments, runController, type OperatorIO } from '../scripts/schwab-controller';
 import { SchwabStore, validateProbeConfig, validateStoredToken, type ProbeConfig } from '../scripts/schwab-store';
-import { TOKEN_URL, ACCOUNT_NUMBERS_URL } from '../src/broker/schwab/transport';
+import { TOKEN_URL, ACCOUNT_NUMBERS_URL, SchwabHTTPError } from '../src/broker/schwab/transport';
 import type { Transport } from '../src/types';
 import { code } from './helpers';
 
@@ -254,6 +254,34 @@ test('expired access refresh rotates token atomically before account reads and s
     assert.deepEqual(calls.map(r => r.method), ['POST', 'GET', 'GET']);
     calls.length = 0; await runController('probe', f.store, io, transport, () => NOW + 1000);
     assert.deepEqual(calls.map(r => r.method), ['GET', 'GET']);
+  } finally { f.clean(); }
+});
+test('failed OAuth exchange receipt retains safe HTTP metadata but no response description or credentials', async () => {
+  const f = fixture(); try {
+    f.store.create('config.json', config()); const { io, notices } = operator(f.path); let calls = 0;
+    await assert.rejects(runController('login', f.store, io, async () => { calls++; return new Response('{"error":"invalid_grant","error_description":"toy-sensitive-code-client-secret","accountNumber":"00000001"}',
+      { status: 400, headers: { 'Content-Type': 'application/json' } }); }, () => NOW), error => {
+      assert.ok(error instanceof SchwabHTTPError); assert.equal(error.diagnostic.stage, 'oauth_exchange'); return true;
+    });
+    const text = readFileSync(join(f.path, readdirSync(f.path).find(n => n.startsWith('operation-'))!), 'utf8');
+    const receipt = JSON.parse(text); assert.deepEqual(receipt.diagnostic, { stage: 'oauth_exchange', http_status: 400, oauth_error: 'invalid_grant' });
+    assert.deepEqual(receipt.counts, { oauth_token_posts: 1, mapping_gets: 0, selected_account_gets: 0, broker_writes: 0 });
+    assert.equal(calls, 1); assert.equal(f.store.exists('token.json'), false); assert.equal(f.store.exists('authorization.html'), false);
+    for (const secret of ['toy-sensitive', '00000001', 'toy-app-secret', 'toy-code']) {
+      assert.equal(text.includes(secret), false); assert.equal(notices.join('\n').includes(secret), false);
+    }
+  } finally { f.clean(); }
+});
+test('refresh HTTP diagnosis does not bypass ambiguous-refresh protection or retry the token', async () => {
+  const f = fixture(); try {
+    f.store.create('config.json', config()); f.store.create('token.json', stored()); const { io } = operator(f.path); let calls = 0;
+    await assert.rejects(runController('probe', f.store, io, async () => { calls++; return new Response('{"error":"invalid_grant","error_description":"toy-sensitive"}',
+      { status: 400, headers: { 'Content-Type': 'application/json' } }); }, () => NOW), error => {
+      assert.ok(error instanceof SchwabHTTPError); assert.equal(error.diagnostic.stage, 'oauth_refresh'); return true;
+    });
+    assert.equal(f.store.exists('refresh-pending.json'), true);
+    await assert.rejects(runController('probe', f.store, io, async () => { calls++; throw new Error('No retry'); }, () => NOW), code('schwab_refresh_reauthorization_required'));
+    assert.equal(calls, 1); assert.equal((f.store.read('token.json') as any).token.refresh_token, 'toy-refresh-token');
   } finally { f.clean(); }
 });
 test('ambiguous refresh cannot be retried automatically and requires fresh single-account OAuth', async () => {

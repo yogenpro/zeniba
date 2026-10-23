@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { requireSafe, safeFailure } from '../src/errors';
 import { SchwabOAuth } from '../src/broker/schwab/oauth';
 import { SchwabObserver, type EmptyProbe } from '../src/broker/schwab/observer';
-import { validateSchwabRequest, TOKEN_URL, ACCOUNT_NUMBERS_URL } from '../src/broker/schwab/transport';
+import { validateSchwabRequest, TOKEN_URL, ACCOUNT_NUMBERS_URL, SchwabHTTPError } from '../src/broker/schwab/transport';
 import type { Clock, Transport } from '../src/types';
 import { SchwabStore, validateProbeConfig, validateStoredToken, type ProbeConfig } from './schwab-store';
 
@@ -140,7 +140,8 @@ export async function runController(command: ControllerCommand, store: SchwabSto
       store.replace(operation, { schema: 'zeniba.schwab-operation.v1', command, status: 'complete', outcome, counts });
     } catch (error) {
       store.replace(operation, { schema: 'zeniba.schwab-operation.v1', command, status: 'failed',
-        error: safeFailure(error).code, counts });
+        error: safeFailure(error).code, counts,
+        ...(error instanceof SchwabHTTPError ? { diagnostic: error.diagnostic } : {}) });
       throw error;
     }
   });

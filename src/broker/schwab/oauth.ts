@@ -85,7 +85,8 @@ export class SchwabOAuth {
     const request = new Request(TOKEN_URL, { method: 'POST', redirect: 'manual', credentials: 'omit',
       headers: { Authorization: `Basic ${authorization}`, Accept: 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded', 'Cache-Control': 'no-store' }, body: body.toString() } as RequestInit & { credentials: 'omit' });
-    const text = await schwabText(request, 'oauth', this.transport, this.timeoutMs);
+    const phase = body.get('grant_type') === 'authorization_code' ? 'oauth_exchange' : 'oauth_refresh';
+    const text = await schwabText(request, 'oauth', this.transport, this.timeoutMs, phase);
     const parsed = parseJson(text);
     requireSafe(parsed && typeof parsed === 'object' && !Array.isArray(parsed), 'invalid_schwab_token_response', 502);
     const r = parsed as Record<string, unknown>, now = this.clock();
