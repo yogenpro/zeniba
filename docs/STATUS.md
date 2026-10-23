@@ -1,5 +1,21 @@
 # Resume status
 
+## Headless WSL OAuth browser handoff — 2026-10-23
+
+Added an instruction-only Windows-browser handoff to the existing manual controller login.
+WSL users keep the login/hidden prompt in the first terminal and open the SAME protected local
+HTML through `explorer.exe`/`wslpath` from a second terminal (or Windows Explorer's WSL path).
+No Linux GUI, automatic browser launch, local web server, public callback, permission relaxation,
+secret/authorization-URL output, clipboard integration or new network operation. Setup/one-account
+consent/state/expiry/TLS/trading restrictions are unchanged; expired challenges need fresh login.
+Never clear an active lock or reuse a stale authorization tab. See the runbook's WSL section.
+
+Local typecheck/build plus **97 tests/0failed/0skipped** pass (6 new filename/WSL instruction/
+shell quoting/controller handoff tests). Domain/egress/OAuth/observer/token-store code and hosted
+Worker routes/config remain unchanged by this follow-up. No real operator config/token/auth-file
+contents are read for tests or diagnosis; no agent-initiated broker login/API call. This is
+synthetic verification, not proof that an owner completed a live consent/account observation.
+
 ## Observation-only controller probe — offline implementation (2026-10-22)
 
 The operator reports the deployed owner view works and explicitly requests real-account tests

@@ -160,6 +160,15 @@ test('a nonempty first login preserves only a blocked receipt and never stores t
     assert.equal(evidence.includes('00000001'), false);
   } finally { f.clean(); }
 });
+test('optional browser handoff receives only the protected filename and still uses owner callback input', async () => {
+  const f = fixture(); try {
+    f.store.create('config.json', config()); const { io } = operator(f.path), received: string[] = [];
+    io.authorizationFile = filename => { received.push(filename); };
+    await runController('login', f.store, io, fake().transport, () => NOW);
+    assert.deepEqual(received, [join(f.path, 'authorization.html')]);
+    assert.equal(received[0]!.includes('state='), false); assert.equal(f.store.exists('authorization.html'), false);
+  } finally { f.clean(); }
+});
 test('denied or malformed callbacks consume the login and remove the protected authorization page', async () => {
   const f = fixture(); try {
     f.store.create('config.json', config()); let count = 0;

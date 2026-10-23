@@ -7,7 +7,10 @@ import { validateSchwabRequest, TOKEN_URL, ACCOUNT_NUMBERS_URL } from '../src/br
 import type { Clock, Transport } from '../src/types';
 import { SchwabStore, validateProbeConfig, validateStoredToken, type ProbeConfig } from './schwab-store';
 
-export interface OperatorIO { hidden(prompt: string): Promise<string>; notice(text: string): void }
+export interface OperatorIO {
+  hidden(prompt: string): Promise<string>; notice(text: string): void;
+  authorizationFile?(filename: string): void;
+}
 export type ControllerCommand = 'setup' | 'status' | 'login' | 'probe';
 export function controllerArguments(args: string[]): { command: ControllerCommand; directory: string; live: boolean } {
   const [command, directory, flag] = args;
@@ -81,7 +84,9 @@ export async function runController(command: ControllerCommand, store: SchwabSto
           + '<a rel="noopener noreferrer" target="_blank" href="' + escape(challenge.authorization_url) + '">Continue at Schwab</a>');
         let token;
         try {
-          io.notice(`Open the protected local file ${join(store.directory, 'authorization.html')} privately in your browser.`);
+          const filename = join(store.directory, 'authorization.html');
+          if (io.authorizationFile) io.authorizationFile(filename);
+          else io.notice(`Open the protected local file ${filename} privately in your browser.`);
           io.notice('Select ONLY the intended empty account at Schwab. A different or additional account blocks the probe.');
           const callback = await io.hidden('Completed callback URL (hidden, single use, expires after ten minutes): ');
           token = await oauth.exchange(callback);

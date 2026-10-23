@@ -85,6 +85,35 @@ The profile accepts HTTPS callbacks only on127.0.0.1, localhost or::1; it must E
 approved app. This avoids sending a code through hosted app/edge logging or changing Access.
 Manual URL copy is an OAuth flow, not scraping/password automation. Do not automate consent.
 
+## Headless WSL: use your Windows browser
+
+A headless WSL shell does NOT require a Linux GUI for this manual flow. Keep the login command
+running in your first interactive terminal; it creates `authorization.html` and waits for the
+callback. The CLI prints a Windows handoff when it detects WSL. In a SECOND WSL terminal run:
+
+```sh
+explorer.exe "$(wslpath -w "$HOME/.zeniba-schwab-probe/authorization.html")"
+```
+
+This opens the SAME protected file through Windows/WSL file access; choose your Windows browser
+if Explorer prompts for an application. Click **Continue at Schwab**, log in yourself and select
+ONLY the empty account. Copy the entire final loopback callback address into the hidden prompt
+in the FIRST terminal, not chat or a shell command. No callback web server or Linux browser is
+needed, and a refused-connection page at the loopback callback is expected.
+
+If Windows interop commands are unavailable, open the same file from Windows File Explorer via
+`\\\\wsl.localhost\\<distro>\\home\\<linux-user>\\.zeniba-schwab-probe\\authorization.html`. Use your own
+Windows user, not a shared computer/profile. Do not copy the file to a public folder, print its
+contents/authorization URL, change file permissions, run a web server or expose a callback port.
+The handoff contains only a local filename; no app secret/token/code is put into a command.
+
+Complete the flow within ten minutes. If an earlier login is still waiting, cancel it with
+Ctrl+C in its original terminal before starting a fresh login; do not run competing controllers
+or delete a live `.lock`. On restart, use the NEW authorization file/state rather than an old
+browser tab. If no actual terminal/PTY is attached, use an interactive terminal (or allocate a
+PTY for your SSH session); do not pipe credentials or the callback around the hidden-input gate.
+You do NOT need to repeat setup, change the registered callback, weaken TLS or redeploy the app.
+
 ## Repeated observation, rotation and private records
 
 ```sh

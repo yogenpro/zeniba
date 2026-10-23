@@ -2,6 +2,7 @@ import { stdin, stdout } from 'node:process';
 import { requireSafe, safeFailure, SafeError } from '../src/errors';
 import { controllerArguments, runController, type OperatorIO } from './schwab-controller';
 import { SchwabStore } from './schwab-store';
+import { authorizationFileNotices } from './schwab-browser';
 
 /** Real TTY only. Secret/callback/account input never echoes, appears in argv or reads a pipe. */
 function hidden(prompt: string): Promise<string> {
@@ -33,7 +34,10 @@ try {
   requireSafe(process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0', 'schwab_TLS_verification_required', 503);
   if (command === 'setup' || command === 'login') requireSafe(stdin.isTTY && stdout.isTTY, 'schwab_private_TTY_required', 503);
   const store = new SchwabStore(directory, command === 'setup');
-  const io: OperatorIO = { hidden, notice: text => stdout.write(text + '\n') };
+  const notice = (text: string) => { stdout.write(text + '\n'); };
+  const io: OperatorIO = { hidden, notice, authorizationFile: filename => {
+    for (const text of authorizationFileNotices(filename, !!(process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP))) notice(text);
+  } };
   // This is the only real fetch in the extension; runController independently enforces the
   // fixed OAuth/GET-only egress policy first. No Worker/global-fetch default is changed.
   await runController(command, store, io, request => fetch(request), Date.now);
