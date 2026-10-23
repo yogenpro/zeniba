@@ -5,6 +5,34 @@ Read `README.md`, `docs/PROJECT.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`,
 Read `PRIVATE_HANDOFF.local.md` locally if present; keep it ignored and confidential.
 Update `docs/STATUS.md` with completed work, tests, blockers and the exact next step.
 
+## Single-empty-account observation probe (2026-10-22)
+
+The operator now explicitly requests real-account testing WITHOUT risking holdings. Read
+`docs/SCHWAB_READ_ONLY.md` and latest STATUS: implement a separate controller-only, observation-
+only probe for ONE preselected empty account. Initial live calls require approved private app
+configuration, exact HTTPS LOOPBACK callback, explicit --live and owner-driven Schwab consent.
+Do not infer credentials/account IDs or hunt them. No order preview/submit/replace/cancel,
+funding/transfer/margin use, all-account holdings query or holdings-account fallback. Tokens
+may themselves permit writes; do not claim a broker-enforced read-only scope.
+
+Domain OAuth/observer use injected transports and fixed narrow egress. The real fetch exists
+only in the explicitly invoked controller script; Worker/coordinator/Wrangler stay mock-only.
+No real data/provider/telemetry/broker secret or callback into production app. Store outside
+ANY Git tree in protected0700/0600 local files with leases/atomic updates; preserve ambiguous
+refresh barriers and require fresh OAuth, no automatic stale-token/lock retry. No account
+as_of/cash/claims certification from a current probe. Unknown positions/balances block; buying
+power is never cash. The owner separately approved protected token retention for an authenticated,
+matched one-account connection when positions are OMITTED and this is the sole data block.
+This is NOT empty/certified: preserve blocked data, null position count/cash/balances and false
+flags; no raw unknown response archive. Null/malformed, visible order/restriction, scope/type or
+other data failures do not gain the exception. A completed connection/exit0 is not a portfolio
+validation pass. Public tests/fixtures remain synthetic. Live-test results and operator
+configuration stay private. See STATUS for source/test evidence and actual live-call count.
+`balance_shape` is notation/presence metadata for13 FIXED names, never amounts/zero/sign or
+settled-cash validation. Unknown names/values/nested data are not echoed. It cannot change token
+admission/data gates or support a readiness claim. No extra endpoint or real-payload inspection
+by an agent is authorized just because cached access works.
+
 ## Scope and confidentiality
 
 - Implement the strategy-neutral application here, not proprietary investment formulas or

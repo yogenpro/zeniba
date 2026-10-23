@@ -1,5 +1,177 @@
 # Resume status
 
+## Value-free balance-field shapes for blocked-data investigation — 2026-10-23
+
+Connection reuse and portfolio completeness are separate. Added a pure fixed-key `balance_shape`
+report to the existing matched-account observation, so missing positions do not conceal which
+cash/balance fields exist or their notation. Classifies container and13 fixed schema names using
+fixed labels only (omitted/null/plain_decimal/exponent_decimal/other_text/boolean/object/array/
+other); unknown broker names are counted, NEVER echoed. No amounts/sign/zero comparisons,
+identifiers, tokens, arbitrary keys, nested contents or raw payload output. Equal notation for
+zero/positive/negative/large toy amounts deliberately produces identical diagnostics.
+
+This is presence/notation inspection, NOT financial balance validation. No effect on position,
+account/type/scope, data-block, token-retention admission, cash/settlement, expiry/refresh, order/
+trade/provider controls. Missing stays unknown, cash null, flags false. Diagnostic is emitted
+only after the same exact account identity/type checks; no extra endpoint/request or broker
+SDK/permission/production change. Raw unknown account payload still discarded. Hosted app
+remains mock; no real account/config/token/callback/response file is read by this work.
+
+Pure/integration checks add8 tests. Local typecheck/build and125 tests/0fail/0skip pass, including
+privacy canaries, malformed containers, inherited fields, dynamic keys/amount suppression,
+unchanged gate results and cached two-GET behavior. No agent-initiated live call. This code
+prepares safer operator investigation; it does not claim approved schema semantics/normalization
+or live financial readiness. Run the UPDATED explicit probe only to obtain the new safe shape
+block, not to force existing positions block green. Do not repeat login or identical probes.
+
+## Nonsecret HTTP rejection diagnostics — 2026-10-23
+
+The generic `schwab_rejected` could not locate/status-classify a broker failure. Added bounded
+HTTP diagnostics with fixed stages oauth_exchange/oauth_refresh/account_mapping/account_details,
+HTTP status and ONLY an allowlisted OAuth protocol reason. Base safe error codes stay unchanged.
+CLI prints this small JSON and protected failed-operation receipts retain the same safe fields.
+No URL/account hash/header/correlation ID/body/description or arbitrary server text is exposed.
+Account error bodies are canceled UNREAD; only OAuth error JSON is privately parsed under the
+existing size/deadline bound to extract a known reason, with everything else discarded. Unknown/
+non-JSON/malformed/oversized errors reveal no value. No retry/redirect/permission relaxation.
+
+Local typecheck/build plus117 tests/0fail/0skip pass (8 new stage/status/whitelist/privacy/body-
+cancel/timeout/receipt/barrier tests). Initial test-tuple typing error is retained privately and
+corrected by a fixture type assertion only. One-account/GET-only/data-blocked/token retention/
+file/refresh-barrier/trading controls remain; no actual operator config/token/response/callback
+contents or credential are read and no live broker/provider/OAuth request is initiated here.
+Only existing NONSECRET operation receipts may be examined for fixed counts/error/stage; never
+ask for full financial/auth data. A historic generic rejection lacks status/reason, so do not
+infer invalid_grant/client/rate-limit/server cause without new safe evidence.
+
+Operator action: use a NEW current authorization page/callback and paste it promptly after
+Schwab redirects. The ten-minute local challenge is NOT a guarantee of broker code validity;
+short-lived/one-use codes can be refused. Share ONLY the new small diagnostic JSON/error code.
+400 invalid_grant at exchange can mean expired/used/invalid code; at refresh it is a separate
+authorization failure. Do not alter saved secrets, retry consumed codes or break refresh locks/
+barriers automatically. No independent live account/financial-readiness claim from these tests.
+
+## Separate retained connection from incomplete portfolio data — 2026-10-23
+
+The operator explicitly approved retaining the verified single-account OAuth connection while
+omitted positions keep portfolio data blocked. This is an admission-policy amendment, NOT a
+fix that manufactures zero holdings or re-labels a failed financial gate. Public mirrored schema
+allows optional positions, but neither optionality nor community default-to-[] code establishes
+absence as zero. No actual broker response/config/token/account values were read by this work.
+
+Reports now distinguish `connection_status` and safe `positions_state` (omitted/null/malformed/
+empty/nonempty). Only matched one-account identity/type plus an OMITTED position field and the
+sole positions-not-explicit data block admit the protected token exception; visible orders/
+restrictions, wrong scope/type, null/malformed, known nonempty or other data failures do not.
+`status: blocked`, null positions count/balances/settled cash and every certification/history/
+order/proposal/trading false flag remain. No balance validation occurs past the missing-position
+gate, no raw unknown response is saved. Never treat cached OAuth as financial readiness.
+
+Login/probe can complete the connection operation with `outcome: connected_data_blocked`/exit0,
+with `token_cached: true` but the original data block still present. Token binding/private file
+protection, one-writer refresh and ambiguous-refresh barrier/re-authorization remain unchanged.
+Every actual probe rechecks consent scope. Status is offline token-presence/expiry only. No new
+broker endpoint/holding query, SDK, credential discovery, provider call or cloud activation.
+
+Six new synthetic shape/admission/privacy tests; full local typecheck/build plus109 tests,
+0fail/0skip pass. Existing nonempty/scope/restricted/file/refresh tests pass. New tests deliberately
+keep a toy nonzero balance UNKNOWN behind omitted positions, not normalized/archived as zero.
+No live call or operator protected-file read/change by this agent. Owner-provided prior output
+indicates its OAuth/mapping/identity/type stages passed; it does not prove missing vs null or
+anything about balances. A fresh OWNER login may be needed because the old gate discarded its
+token. Then explicit probe can reuse it while financial data remains blocked; no repeated OAuth
+just for omission. See [runbook](SCHWAB_READ_ONLY.md), not a live-validation/profit claim.
+
+## OAuth callback session compatibility and safe diagnosis — 2026-10-23
+
+Reproduced a parser bug with SYNTHETIC data: a Schwab-style callback containing auxiliary
+`session` was rejected by our code/state/error-only query allowlist with the generic
+`invalid_schwab_oauth_callback`. A public mirror of the portal OAuth reference includes this
+callback parameter; direct official fetch still403. No real callback/config/token/account data
+was requested/read. This is a confirmed compatibility defect, not proof of the precise cause
+of an individual operator failure whose URL was deliberately not inspected.
+
+Accept only the additional named `session` field as bounded, control-free, single-valued
+metadata; never forward/persist/log/use it as CSRF state. Matching mandatory generated state,
+registered origin/path, expiry/one-use challenge, duplicate/unknown parameter checks and all
+one-account/read-only/secret/trading controls remain. Trim surrounding ASCII clipboard whitespace
+only, never rewrite internal URL/code or decode twice. Fixed nonsecret diagnostic codes now
+separate bad format, origin/path, authority/fragment, duplicate/unknown query and session issues.
+No input values, dynamic query names, registered callback or secrets are echoed in errors.
+
+Six new regression/privacy/security tests failed before the fix and pass afterward. Full
+local typecheck/build plus **103 tests/0failed/0skipped** pass. Before-fix log retained privately.
+No agent-initiated live login/broker/provider request, no operator file contents read or modified,
+no production/infra change. The owner must start a NEW login/tab/state after a failed exchange;
+never replay an old callback or send its URL/code in chat. If it still fails, report ONLY the
+new safe error code. Missing/mismatched OAuth state remains blocked; session is not a workaround.
+
+## Headless WSL OAuth browser handoff — 2026-10-23
+
+Added an instruction-only Windows-browser handoff to the existing manual controller login.
+WSL users keep the login/hidden prompt in the first terminal and open the SAME protected local
+HTML through `explorer.exe`/`wslpath` from a second terminal (or Windows Explorer's WSL path).
+No Linux GUI, automatic browser launch, local web server, public callback, permission relaxation,
+secret/authorization-URL output, clipboard integration or new network operation. Setup/one-account
+consent/state/expiry/TLS/trading restrictions are unchanged; expired challenges need fresh login.
+Never clear an active lock or reuse a stale authorization tab. See the runbook's WSL section.
+
+Local typecheck/build plus **97 tests/0failed/0skipped** pass (6 new filename/WSL instruction/
+shell quoting/controller handoff tests). Domain/egress/OAuth/observer/token-store code and hosted
+Worker routes/config remain unchanged by this follow-up. No real operator config/token/auth-file
+contents are read for tests or diagnosis; no agent-initiated broker login/API call. This is
+synthetic verification, not proof that an owner completed a live consent/account observation.
+The branch also incorporates current main's independently scoped development-security overrides
+below, preserving the earlier probe commits/evidence rather than rewriting their source identity.
+
+## Observation-only controller probe — offline implementation (2026-10-22)
+
+The operator reports the deployed owner view works and explicitly requests real-account tests
+without risking existing holdings. Treat this as an owner report, NOT independent authenticated
+UI/DO/R2/persistence certification. The bounded next scope is ONE privately selected empty
+account, observation only. No financial writes, funding, margin use, holdings-account fallback,
+provider calls, cloud deployment or changes to the hosted mock are authorized by this probe.
+Actual operator configuration/account details and answers remain private, not in this source.
+
+Implemented [controller runbook](SCHWAB_READ_ONLY.md), fixed-origin confidential OAuth and
+GET-only observer, exact broker-number lexeme parsing, single-account consent/identity checks,
+protected Linux24 local setup/token/evidence store, single-use expiring state, hidden TTY input,
+loopback-only callback, no redirects, bounded deadlines/body, redacted errors and explicit live
+opt-in. Additional consent blocks BEFORE account detail reads. Missing positions/unknown or
+nonzero balances block; margin buying power is never cash. The result is NOT a Portfolio: all
+certification/history/order/cutoff flags false, settled cash null, no real proposal. Unexpected
+holdings/balances are not returned as raw archived evidence. Only matched empty-current records
+may be saved outside Git in0600 files under0700, not in app DO/R2 state.
+
+A local exclusive lease serializes refresh and file updates; atomic/fsynced no-clobber creates
+and replacements reject bad ownership/modes/symlink/hardlink input. Refresh-pending barrier
+survives ambiguous network/persistence failure and requires explicit fresh OAuth, never silently
+retries a possibly consumed token. No stale-lock breaking. Public CI is synthetic/no credentials.
+Worker/coordinator/config/contract/dependency-lock bytes are unchanged; the built Worker contains
+neither the Schwab origin nor probe schema. Existing deployment guards still allow only mock.
+
+Verification: reviewed local `npm run check` passes **91 tests/0 failed/0 skipped**, including
+40 new probe/parser/OAuth/controller/filesystem/failure tests and all51 prior tests. Typecheck,
+bundle and actual local workerd/SQLite/R2 tests pass using the preexisting isolated compatible
+runtime, no system-library changes or remote runtime. First CF/Node Request type errors and
+a follow-on type-assertion formatting failure are retained privately with corrected checks.
+An ancillary source inventory also caught an untracked temporary dependency symlink (EISDIR);
+removed that link ONLY, clean-installed dependencies into an actual ignored directory, and
+repeated all91 tests successfully against this worktree's own binary with the same isolated
+loader. Corrected source inventory has17 regular files/no symlinks/secret-pattern hits/private
+paths; no staging/publication occurred at failure. No financial/runtime rule changed to pass.
+This is self-review plus tests, NOT an independent security audit or live Schwab proof.
+
+**Live calls so far: ZERO.** No app secret/token, account identifier or actual Schwab state has
+been read/received/configured by this work; no secret lookup, consent/login, credentialed request,
+provider call, R2 upload or deployment. Exact remaining owner step: review the probe, then run
+hidden local `setup` with the approved app's matching HTTPS loopback callback and the one empty
+account, followed by explicit `login --live`. Only the owner completes Schwab login/consent and
+pastes the final callback into the hidden terminal, never chat. Schema gaps remain blocked and
+need approved API documentation/review; do not relax them just to get a green empty result.
+Hosted integration, histories/claims/settlement, backup restore, monitoring and private-provider
+transport/current inputs remain separate gates. This probe is not a real-capital pilot.
+
 ## Development dependency security fixes — 2026-10-23
 
 Retain the reviewed direct tool/runtime pins and override Miniflare’s transitive
