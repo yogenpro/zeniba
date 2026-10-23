@@ -21,7 +21,12 @@ No real data/provider/telemetry/broker secret or callback into production app. S
 ANY Git tree in protected0700/0600 local files with leases/atomic updates; preserve ambiguous
 refresh barriers and require fresh OAuth, no automatic stale-token/lock retry. No account
 as_of/cash/claims certification from a current probe. Unknown positions/balances block; buying
-power is never cash. Public tests/fixtures remain synthetic. Live-test results and operator
+power is never cash. The owner separately approved protected token retention for an authenticated,
+matched one-account connection when positions are OMITTED and this is the sole data block.
+This is NOT empty/certified: preserve blocked data, null position count/cash/balances and false
+flags; no raw unknown response archive. Null/malformed, visible order/restriction, scope/type or
+other data failures do not gain the exception. A completed connection/exit0 is not a portfolio
+validation pass. Public tests/fixtures remain synthetic. Live-test results and operator
 configuration stay private. See STATUS for source/test evidence and actual live-call count.
 
 ## Scope and confidentiality

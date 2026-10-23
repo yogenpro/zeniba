@@ -11,6 +11,8 @@ export interface EmptyProbe {
   schema: 'zeniba.schwab-probe.v1'; account_ref: string; observed_at: string;
   status: 'observed_empty' | 'blocked'; blocks: string[]; reported_balances: Record<string, string> | null;
   positions_reported: number | null; expected_account_type: 'MARGIN' | 'CASH';
+  connection_status: 'unverified' | 'verified_single_account';
+  positions_state: 'unverified' | 'omitted' | 'null' | 'malformed' | 'empty' | 'nonempty';
   data_certified: false; account_state_certified: false;
   account_cutoff_verified: false; open_orders_verified: false; history_verified: false;
   settled_cash: null; buying_power_used_as_cash: false; broker_execution_enabled: false; provider_called: false;
@@ -46,6 +48,7 @@ export class SchwabObserver {
     requireSafe(Number.isSafeInteger(now), 'invalid_schwab_clock', 503);
     const report: EmptyProbe = { schema: 'zeniba.schwab-probe.v1', account_ref: this.selection.account_ref,
       observed_at: new Date(now).toISOString(), status: 'blocked', blocks: [], reported_balances: null, positions_reported: null,
+      connection_status: 'unverified', positions_state: 'unverified',
       expected_account_type: this.selection.expected_account_type, data_certified: false, account_state_certified: false,
       account_cutoff_verified: false,
       open_orders_verified: false, history_verified: false, settled_cash: null, buying_power_used_as_cash: false,
@@ -55,13 +58,19 @@ export class SchwabObserver {
     const account = parsed.securitiesAccount;
     requireSafe(account.accountNumber === this.selection.expected_account_number, 'schwab_account_identity_mismatch', 409);
     if (account.type !== this.selection.expected_account_type) return blocked('schwab_account_type_mismatch');
-    // An omitted positions field is UNKNOWN, not automatically an empty account.
-    if (!Array.isArray(account.positions)) return blocked('schwab_positions_not_explicit');
-    report.positions_reported = account.positions.length;
-    if (account.positions.length !== 0) return blocked('schwab_nonempty_account');
+    report.connection_status = 'verified_single_account';
+    report.positions_state = !Object.hasOwn(account, 'positions') ? 'omitted' : account.positions === null ? 'null'
+      : !Array.isArray(account.positions) ? 'malformed' : account.positions.length === 0 ? 'empty' : 'nonempty';
+    // Visible restrictions/orders still block token-retention admission, even if positions
+    // are omitted. Absence of these fields is not an open-order/restriction certificate.
     if ('orderStrategies' in account && (!Array.isArray(account.orderStrategies) || account.orderStrategies.length !== 0))
       return blocked('schwab_order_data_present');
     if ('isClosingOnlyRestricted' in account && account.isClosingOnlyRestricted !== false) return blocked('schwab_account_restricted');
+    // Missing is UNKNOWN, never [] or zero. An owner-authorized connection may be retained
+    // for this exact shape; balances are deliberately NOT normalized/validated past this gate.
+    if (!Array.isArray(account.positions)) return blocked('schwab_positions_not_explicit');
+    report.positions_reported = account.positions.length;
+    if (account.positions.length !== 0) return blocked('schwab_nonempty_account');
     const balances = account.currentBalances;
     // These are observed balance fields, not a claim about Schwab settlement semantics.
     if (!object(balances) || !['cashBalance', 'liquidationValue', 'equity', 'longMarketValue', 'shortMarketValue']

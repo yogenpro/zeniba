@@ -63,6 +63,26 @@ test('missing position view is unknown, not zero, and raw payload is not returne
   const value: any = account(); delete value.securitiesAccount.positions;
   const result = await observe(JSON.stringify(value)).observer.probe(access);
   assert.deepEqual(result.report.blocks, ['schwab_positions_not_explicit']); assert.equal(result.raw_empty_account, null);
+  assert.equal(result.report.connection_status, 'verified_single_account'); assert.equal(result.report.positions_state, 'omitted');
+  assert.equal(result.report.positions_reported, null); assert.equal(result.report.reported_balances, null);
+  assert.equal(result.report.data_certified, false); assert.equal(result.report.settled_cash, null);
+});
+test('null and malformed positions remain distinct from omission and from an explicit empty array', async () => {
+  for (const [positions, expected] of [[null, 'null'], [{}, 'malformed'], ['not-an-array', 'malformed']] as const) {
+    const value: any = account(); value.securitiesAccount.positions = positions;
+    const result = await observe(JSON.stringify(value)).observer.probe(access);
+    assert.equal(result.report.positions_state, expected); assert.equal(result.report.status, 'blocked');
+    assert.equal(result.report.positions_reported, null); assert.equal(result.raw_empty_account, null);
+  }
+});
+test('visible orders or account restrictions still block before an omitted-position retention case', async () => {
+  for (const [extra, expected] of [[{ orderStrategies: [{ orderId: 'toy' }] }, 'schwab_order_data_present'],
+    [{ isClosingOnlyRestricted: true }, 'schwab_account_restricted']] as const) {
+    const value: any = account(); delete value.securitiesAccount.positions; Object.assign(value.securitiesAccount, extra);
+    const result = await observe(JSON.stringify(value)).observer.probe(access);
+    assert.equal(result.report.positions_state, 'omitted'); assert.deepEqual(result.report.blocks, [expected]);
+    assert.equal(result.raw_empty_account, null);
+  }
 });
 test('unexpected holdings block even when quantities/market values are zero', async () => {
   const value = account(); value.securitiesAccount.positions = [{ instrument: { symbol: 'TOY1' }, longQuantity: 0 }];

@@ -23,9 +23,19 @@ export function controllerArguments(args: string[]): { command: ControllerComman
 function escape(text: string): string {
   return text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
-function summary(report: EmptyProbe): string {
-  return JSON.stringify({ status: report.status, blocks: report.blocks, data_certified: false,
-    open_orders_verified: false, settled_cash_normalized: false, broker_execution_enabled: false });
+function summary(report: EmptyProbe, tokenCached: boolean): string {
+  return JSON.stringify({ status: report.status, blocks: report.blocks, connection_status: report.connection_status,
+    positions_state: report.positions_state, positions_reported: report.positions_reported, token_cached: tokenCached,
+    data_certified: false, open_orders_verified: false, settled_cash_normalized: false, broker_execution_enabled: false });
+}
+/** Separate connection admission from financial/data validity. The owner explicitly permits
+ * retention for an OMITTED positions field only; null/malformed, known nonempty, other blocks
+ * and wrong scope/type remain failures. Missing positions NEVER become empty/zero.
+ */
+function retainableConnection(report: EmptyProbe): boolean {
+  return report.connection_status === 'verified_single_account' && (report.status === 'observed_empty'
+    || (report.status === 'blocked' && report.positions_state === 'omitted' && report.positions_reported === null
+      && report.blocks.length === 1 && report.blocks[0] === 'schwab_positions_not_explicit'));
 }
 
 /** Only this explicit operator boundary gets a real transport. The Worker never imports it. */
@@ -72,6 +82,7 @@ export async function runController(command: ControllerCommand, store: SchwabSto
     };
     const oauth = new SchwabOAuth(config, guarded, clock);
     const observer = new SchwabObserver(config, guarded, clock);
+    let outcome: 'observed_empty' | 'connected_data_blocked' | null = null;
     try {
       if (command === 'login') {
         const challenge = oauth.begin();
@@ -92,8 +103,11 @@ export async function runController(command: ControllerCommand, store: SchwabSto
           token = await oauth.exchange(callback);
         } finally { store.removeAuthorization(); }
         const result = await observer.probe(token.access_token);
-        store.evidence('probe', result); io.notice(summary(result.report));
-        requireSafe(result.report.status === 'observed_empty', 'schwab_initial_observation_blocked');
+        store.evidence('probe', result);
+        if (!retainableConnection(result.report)) {
+          io.notice(summary(result.report, false));
+          requireSafe(false, 'schwab_initial_observation_blocked');
+        }
         const stored = { binding_id: config.binding_id, token };
         if (store.exists('token.json')) { validateStoredToken(store.read('token.json'), config, clock()); store.replace('token.json', stored); }
         else store.create('token.json', stored);
@@ -102,7 +116,11 @@ export async function runController(command: ControllerCommand, store: SchwabSto
           requireSafe(barrier && barrier.binding_id === config.binding_id, 'schwab_refresh_barrier_binding_mismatch');
           store.clearRefreshBarrier(); // Explicit fresh OAuth is recovery from ambiguous rotation.
         }
-        io.notice('OAuth and single-account current observations succeeded; protected token/evidence saved.');
+        outcome = result.report.status === 'observed_empty' ? 'observed_empty' : 'connected_data_blocked';
+        io.notice(summary(result.report, true));
+        io.notice(outcome === 'observed_empty'
+          ? 'OAuth and single-account current observations succeeded; protected token/evidence saved.'
+          : 'Single-account connection saved. Portfolio data remains BLOCKED: positions unknown, balances not validated. No proposal or trade.');
       } else {
         requireSafe(!store.exists('refresh-pending.json'), 'schwab_refresh_reauthorization_required');
         const stored = validateStoredToken(store.read('token.json'), config, clock());
@@ -115,10 +133,11 @@ export async function runController(command: ControllerCommand, store: SchwabSto
           store.clearRefreshBarrier();
         }
         const result = await observer.probe(stored.token.access_token);
-        store.evidence('probe', result); io.notice(summary(result.report));
-        requireSafe(result.report.status === 'observed_empty', 'schwab_current_observation_blocked');
+        store.evidence('probe', result); io.notice(summary(result.report, true));
+        requireSafe(retainableConnection(result.report), 'schwab_current_observation_blocked');
+        outcome = result.report.status === 'observed_empty' ? 'observed_empty' : 'connected_data_blocked';
       }
-      store.replace(operation, { schema: 'zeniba.schwab-operation.v1', command, status: 'complete', counts });
+      store.replace(operation, { schema: 'zeniba.schwab-operation.v1', command, status: 'complete', outcome, counts });
     } catch (error) {
       store.replace(operation, { schema: 'zeniba.schwab-operation.v1', command, status: 'failed',
         error: safeFailure(error).code, counts });

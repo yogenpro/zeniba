@@ -1,5 +1,36 @@
 # Resume status
 
+## Separate retained connection from incomplete portfolio data — 2026-10-23
+
+The operator explicitly approved retaining the verified single-account OAuth connection while
+omitted positions keep portfolio data blocked. This is an admission-policy amendment, NOT a
+fix that manufactures zero holdings or re-labels a failed financial gate. Public mirrored schema
+allows optional positions, but neither optionality nor community default-to-[] code establishes
+absence as zero. No actual broker response/config/token/account values were read by this work.
+
+Reports now distinguish `connection_status` and safe `positions_state` (omitted/null/malformed/
+empty/nonempty). Only matched one-account identity/type plus an OMITTED position field and the
+sole positions-not-explicit data block admit the protected token exception; visible orders/
+restrictions, wrong scope/type, null/malformed, known nonempty or other data failures do not.
+`status: blocked`, null positions count/balances/settled cash and every certification/history/
+order/proposal/trading false flag remain. No balance validation occurs past the missing-position
+gate, no raw unknown response is saved. Never treat cached OAuth as financial readiness.
+
+Login/probe can complete the connection operation with `outcome: connected_data_blocked`/exit0,
+with `token_cached: true` but the original data block still present. Token binding/private file
+protection, one-writer refresh and ambiguous-refresh barrier/re-authorization remain unchanged.
+Every actual probe rechecks consent scope. Status is offline token-presence/expiry only. No new
+broker endpoint/holding query, SDK, credential discovery, provider call or cloud activation.
+
+Six new synthetic shape/admission/privacy tests; full local typecheck/build plus109 tests,
+0fail/0skip pass. Existing nonempty/scope/restricted/file/refresh tests pass. New tests deliberately
+keep a toy nonzero balance UNKNOWN behind omitted positions, not normalized/archived as zero.
+No live call or operator protected-file read/change by this agent. Owner-provided prior output
+indicates its OAuth/mapping/identity/type stages passed; it does not prove missing vs null or
+anything about balances. A fresh OWNER login may be needed because the old gate discarded its
+token. Then explicit probe can reuse it while financial data remains blocked; no repeated OAuth
+just for omission. See [runbook](SCHWAB_READ_ONLY.md), not a live-validation/profit claim.
+
 ## OAuth callback session compatibility and safe diagnosis — 2026-10-23
 
 Reproduced a parser bug with SYNTHETIC data: a Schwab-style callback containing auxiliary

@@ -21,9 +21,11 @@ outside Git on the operator's Linux controller. No credential or live account is
 - Money/share numeric literals are parsed as exact decimal lexemes, never binary floating
   point. Buying power is NEVER settled cash. Every reported current balance must be zero
   for this first probe; unknown formats/nonzero values block rather than become zero.
-- `positions` must be explicitly present and empty. An omitted field is UNKNOWN, not zero.
-  The API's exact approved response schema must be checked; a legitimately omitted empty
-  field will currently block and needs a separately reviewed mapping, not a permissive flag.
+- `positions` must be explicitly present and empty for `observed_empty`. An omitted field is
+  UNKNOWN, not zero; null/malformed are separate blocked shapes. A separately approved connection-
+  retention rule may cache the verified one-account token for the OMITTED shape, while the report
+  stays blocked, position count/cash/balances remain unknown and raw account data is discarded.
+  This is not a mapping of omission to an empty portfolio or a permission to trade.
 - `observed_empty` means only the requested current observations passed this narrow check.
   It is NOT settled-cash normalization, open-order/claim/history completeness, opening-state
   certification, a strategy cutoff snapshot or trading readiness. Certification flags stay
@@ -77,13 +79,48 @@ and the matched account GET. There is no broker-write capability. The operator r
    as a workaround. Never paste that callback/code into chat. The exact scheme/host/port/path,
    state, query uniqueness and ten-minute expiry are verified before token exchange.
 4. The state is consumed even on failure; retries need a new login. The authorization file is
-   removed on normal completion/failure. Only a passing single-account empty observation saves
-   the token; failed consent never saves one. Unexpected holdings/balances are not returned as
-   raw archived evidence. Safe block codes explain supported-data gaps.
+   removed on normal completion/failure. A passing explicit-empty observation OR the separately
+   approved verified-account/OMITTED-position connection case saves the protected token. Failed
+   scope/identity/type, null/malformed positions, visible restrictions/orders or known nonempty
+   holdings do not gain that exception. Unexpected/unknown raw account data is not archived.
+   Safe structural enums explain data gaps without revealing account details.
 
 The profile accepts HTTPS callbacks only on127.0.0.1, localhost or::1; it must EXACTLY match the
 approved app. This avoids sending a code through hosted app/edge logging or changing Access.
 Manual URL copy is an OAuth flow, not scraping/password automation. Do not automate consent.
+
+## Connection retained does not mean portfolio validated
+
+The operator separately approved retaining a single-account OAuth connection when the broker
+OMITS positions. This changes only the controller's token-retention gate, not the data guard.
+The mapping must still contain exactly the privately pinned account, returned identity and type
+must match, no visible order/restriction block may exist, and the sole remaining data block
+must be `schwab_positions_not_explicit` with `positions_state: omitted`. Null/malformed shapes
+remain failures, as do other data/scope/holdings blocks. There is no permissive override flag.
+
+For this case login/probe completes the CONNECTION operation and may exit0, while reporting:
+
+```json
+{"status":"blocked","connection_status":"verified_single_account","positions_state":"omitted","positions_reported":null,"token_cached":true,"data_certified":false,"open_orders_verified":false,"settled_cash_normalized":false,"broker_execution_enabled":false}
+```
+
+The usual positions block is retained in `blocks`. Balances have NOT been validated past the
+missing-position gate; do not infer zero cash, zero holdings, zero debt, absence of orders or
+history completeness. Settled cash remains null and no historical as_of/Portfolio/proposal is
+created. Raw account response remains null in archived probe evidence. Successful operation
+receipts say `outcome: connected_data_blocked`, not a financial-readiness pass.
+
+The token remains configuration-bound/0600 under the private0700 directory. Future explicit
+`probe --live` calls recheck scope each time and preserve refresh/barrier/lease controls. The
+offline `status` command confirms only local token presence/expiry, not current broker access
+or valid financial state. A later known nonempty or wrong-account result still blocks; existing
+tokens are not automatically deleted, and no holding/order/account is changed.
+
+This avoids repeating OAuth just to investigate an optional/missing field. If the old login
+already discarded its token, one fresh owner login is needed after updating; setup is unchanged.
+If the broker returns null/malformed instead, report only the safe positions_state/block code,
+never its raw account response. An optional field in a public mirrored schema alone does not
+prove that absence means no holdings; more normalization needs approved broker/statement evidence.
 
 ## Callback compatibility and private troubleshooting
 

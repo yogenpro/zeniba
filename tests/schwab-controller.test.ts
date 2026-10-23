@@ -136,6 +136,73 @@ test('successful synthetic OAuth probe persists only bound token and private emp
     for (const n of names) assert.equal(lstatSync(join(f.path, n)).mode & 0o777, 0o600);
   } finally { f.clean(); }
 });
+test('owner-authorized omitted-position connection is retained while every financial validity flag stays blocked', async () => {
+  const f = fixture(); try {
+    f.store.create('config.json', config()); const { io, notices } = operator(f.path), network = fake();
+    const transport: Transport = async r => {
+      if (r.url.includes('?fields=positions')) return new Response('{"securitiesAccount":{"accountNumber":"00000001","type":"MARGIN","currentBalances":{"buyingPower":123.45}}}',
+        { headers: { 'Content-Type': 'application/json' } });
+      return network.transport(r);
+    };
+    await runController('login', f.store, io, transport, () => NOW);
+    assert.equal(f.store.exists('token.json'), true);
+    assert.equal(validateStoredToken(f.store.read('token.json'), config(), NOW).token.access_token, 'toy-next-access');
+    const line = notices.find(n => n.startsWith('{'))!, output = JSON.parse(line);
+    assert.equal(output.connection_status, 'verified_single_account'); assert.equal(output.token_cached, true);
+    assert.equal(output.status, 'blocked'); assert.equal(output.positions_state, 'omitted'); assert.equal(output.positions_reported, null);
+    assert.equal(output.data_certified, false); assert.equal(output.settled_cash_normalized, false);
+    assert.equal(output.open_orders_verified, false); assert.equal(output.broker_execution_enabled, false);
+    assert.deepEqual(output.blocks, ['schwab_positions_not_explicit']);
+    const probe = JSON.parse(readFileSync(join(f.path, readdirSync(f.path).find(n => n.startsWith('probe-'))!), 'utf8'));
+    assert.equal(probe.raw_empty_account, null); assert.equal(probe.report.reported_balances, null);
+    assert.equal(probe.report.settled_cash, null); assert.equal(probe.report.provider_called, false);
+    assert.equal(JSON.stringify(probe).includes('123.45'), false);
+    const receipt = JSON.parse(readFileSync(join(f.path, readdirSync(f.path).find(n => n.startsWith('operation-'))!), 'utf8'));
+    assert.equal(receipt.outcome, 'connected_data_blocked'); assert.equal(receipt.counts.broker_writes, 0);
+    for (const secret of ['00000001', 'toy-next-access', 'toy-next-refresh', '123.45']) assert.equal(notices.join('\n').includes(secret), false);
+    assert.equal(lstatSync(join(f.path, 'token.json')).mode & 0o777, 0o600);
+    network.calls.length = 0; notices.length = 0;
+    await runController('probe', f.store, io, transport, () => NOW + 1000);
+    assert.deepEqual(network.calls.map(r => r.method), ['GET']); // Detail uses the separate fake response above.
+    assert.equal(JSON.parse(notices[0]!).status, 'blocked'); assert.equal(JSON.parse(notices[0]!).token_cached, true);
+  } finally { f.clean(); }
+});
+test('null malformed type-mismatched restricted or ordered accounts do not gain the omitted-position token exception', async () => {
+  const variants = [
+    { type: 'MARGIN', positions: null }, { type: 'MARGIN', positions: {} }, { type: 'CASH' },
+    { type: 'MARGIN', isClosingOnlyRestricted: true }, { type: 'MARGIN', orderStrategies: [{ orderId: 'toy' }] }
+  ];
+  for (const variant of variants) {
+    const f = fixture(); try {
+      f.store.create('config.json', config()); const { io } = operator(f.path), network = fake();
+      await assert.rejects(runController('login', f.store, io, async r => r.url.includes('?fields=positions')
+        ? new Response(JSON.stringify({ securitiesAccount: { accountNumber: '00000001', ...variant } }), { headers: { 'Content-Type': 'application/json' } })
+        : network.transport(r), () => NOW), code('schwab_initial_observation_blocked'));
+      assert.equal(f.store.exists('token.json'), false);
+    } finally { f.clean(); }
+  }
+});
+test('cached omitted-position connection still rechecks scope and rejects later known holdings', async () => {
+  const f = fixture(); try {
+    f.store.create('config.json', config()); const token = stored(); token.token.issued_at = NOW; token.token.expires_at = NOW + 1800000;
+    f.store.create('token.json', token); const { io } = operator(f.path), wrong = fake('[]');
+    await assert.rejects(runController('probe', f.store, io, wrong.transport, () => NOW), code('schwab_single_account_consent_required'));
+    assert.deepEqual(wrong.calls.map(r => r.url), [ACCOUNT_NUMBERS_URL]);
+    const base = fake();
+    await assert.rejects(runController('probe', f.store, io, async r => r.url.includes('?fields=positions')
+      ? new Response('{"securitiesAccount":{"accountNumber":"00000001","type":"MARGIN","positions":[{"instrument":{"symbol":"TOY1"}}]}}', { headers: { 'Content-Type': 'application/json' } })
+      : base.transport(r), () => NOW), code('schwab_current_observation_blocked'));
+  } finally { f.clean(); }
+});
+test('new connection caching never certifies a real account through the offline status command', async () => {
+  const f = fixture(); try {
+    f.store.create('config.json', config()); f.store.create('token.json', stored()); const { io, notices } = operator(f.path);
+    await runController('status', f.store, io, async () => { throw new Error('No status network'); }, () => NOW);
+    const output = JSON.parse(notices[0]!); assert.equal(output.token_present, true);
+    assert.equal('data_certified' in output, false); assert.equal(output.network_requests_made, 0);
+    assert.equal(output.broker_execution_enabled, false);
+  } finally { f.clean(); }
+});
 test('additional consent stops before account details and never saves a token or raw records', async () => {
   const f = fixture(); try {
     f.store.create('config.json', config()); const { io } = operator(f.path), { transport, calls } = fake('[]');
