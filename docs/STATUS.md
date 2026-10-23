@@ -1,5 +1,29 @@
 # Resume status
 
+## Value-free balance-field shapes for blocked-data investigation — 2026-10-23
+
+Connection reuse and portfolio completeness are separate. Added a pure fixed-key `balance_shape`
+report to the existing matched-account observation, so missing positions do not conceal which
+cash/balance fields exist or their notation. Classifies container and13 fixed schema names using
+fixed labels only (omitted/null/plain_decimal/exponent_decimal/other_text/boolean/object/array/
+other); unknown broker names are counted, NEVER echoed. No amounts/sign/zero comparisons,
+identifiers, tokens, arbitrary keys, nested contents or raw payload output. Equal notation for
+zero/positive/negative/large toy amounts deliberately produces identical diagnostics.
+
+This is presence/notation inspection, NOT financial balance validation. No effect on position,
+account/type/scope, data-block, token-retention admission, cash/settlement, expiry/refresh, order/
+trade/provider controls. Missing stays unknown, cash null, flags false. Diagnostic is emitted
+only after the same exact account identity/type checks; no extra endpoint/request or broker
+SDK/permission/production change. Raw unknown account payload still discarded. Hosted app
+remains mock; no real account/config/token/callback/response file is read by this work.
+
+Pure/integration checks add8 tests. Local typecheck/build and125 tests/0fail/0skip pass, including
+privacy canaries, malformed containers, inherited fields, dynamic keys/amount suppression,
+unchanged gate results and cached two-GET behavior. No agent-initiated live call. This code
+prepares safer operator investigation; it does not claim approved schema semantics/normalization
+or live financial readiness. Run the UPDATED explicit probe only to obtain the new safe shape
+block, not to force existing positions block green. Do not repeat login or identical probes.
+
 ## Nonsecret HTTP rejection diagnostics — 2026-10-23
 
 The generic `schwab_rejected` could not locate/status-classify a broker failure. Added bounded

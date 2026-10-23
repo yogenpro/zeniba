@@ -152,6 +152,8 @@ test('owner-authorized omitted-position connection is retained while every finan
     assert.equal(output.status, 'blocked'); assert.equal(output.positions_state, 'omitted'); assert.equal(output.positions_reported, null);
     assert.equal(output.data_certified, false); assert.equal(output.settled_cash_normalized, false);
     assert.equal(output.open_orders_verified, false); assert.equal(output.broker_execution_enabled, false);
+    assert.equal(output.balance_shape.container, 'object'); assert.equal(output.balance_shape.fields.buyingPower, 'plain_decimal');
+    assert.equal(output.balance_shape.fields.cashBalance, 'omitted'); assert.equal(output.balance_shape.amounts_disclosed, false);
     assert.deepEqual(output.blocks, ['schwab_positions_not_explicit']);
     const probe = JSON.parse(readFileSync(join(f.path, readdirSync(f.path).find(n => n.startsWith('probe-'))!), 'utf8'));
     assert.equal(probe.raw_empty_account, null); assert.equal(probe.report.reported_balances, null);
@@ -192,6 +194,24 @@ test('cached omitted-position connection still rechecks scope and rejects later 
     await assert.rejects(runController('probe', f.store, io, async r => r.url.includes('?fields=positions')
       ? new Response('{"securitiesAccount":{"accountNumber":"00000001","type":"MARGIN","positions":[{"instrument":{"symbol":"TOY1"}}]}}', { headers: { 'Content-Type': 'application/json' } })
       : base.transport(r), () => NOW), code('schwab_current_observation_blocked'));
+  } finally { f.clean(); }
+});
+test('a cached shape-only probe uses two account GETs and never emits values identifiers or a proposal', async () => {
+  const f = fixture(); try {
+    f.store.create('config.json', config()); const token = stored(); token.token.issued_at = NOW; token.token.expires_at = NOW + 1800000;
+    f.store.create('token.json', token); const { io, notices } = operator(f.path), calls: Request[] = [];
+    await runController('probe', f.store, io, async r => {
+      calls.push(r);
+      return new Response(r.url === ACCOUNT_NUMBERS_URL ? '[{"accountNumber":"00000001","hashValue":"ToyHash0001"}]'
+        : '{"securitiesAccount":{"accountNumber":"00000001","type":"MARGIN","currentBalances":{"cashBalance":4567.89,"marginBalance":null,"toy-private-key":"toy-private-value"}}}',
+      { headers: { 'Content-Type': 'application/json' } });
+    }, () => NOW);
+    const text = notices.join('\n'), result = JSON.parse(notices[0]!);
+    assert.deepEqual(calls.map(c => c.method), ['GET', 'GET']); assert.equal(result.token_cached, true);
+    assert.equal(result.status, 'blocked'); assert.equal(result.balance_shape.fields.cashBalance, 'plain_decimal');
+    assert.equal(result.balance_shape.fields.marginBalance, 'null'); assert.equal(result.balance_shape.unrecognized_field_count, 1);
+    for (const needle of ['4567.89', '00000001', 'ToyHash0001', 'toy-private', 'toy-access-token']) assert.equal(text.includes(needle), false);
+    assert.equal(result.data_certified, false); assert.equal(result.settled_cash_normalized, false); assert.equal(result.broker_execution_enabled, false);
   } finally { f.clean(); }
 });
 test('new connection caching never certifies a real account through the offline status command', async () => {

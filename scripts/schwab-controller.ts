@@ -26,7 +26,7 @@ function escape(text: string): string {
 function summary(report: EmptyProbe, tokenCached: boolean): string {
   return JSON.stringify({ status: report.status, blocks: report.blocks, connection_status: report.connection_status,
     positions_state: report.positions_state, positions_reported: report.positions_reported, token_cached: tokenCached,
-    data_certified: false, open_orders_verified: false, settled_cash_normalized: false, broker_execution_enabled: false });
+    balance_shape: report.balance_shape, data_certified: false, open_orders_verified: false, settled_cash_normalized: false, broker_execution_enabled: false });
 }
 /** Separate connection admission from financial/data validity. The owner explicitly permits
  * retention for an OMITTED positions field only; null/malformed, known nonempty, other blocks

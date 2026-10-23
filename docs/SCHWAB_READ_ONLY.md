@@ -122,6 +122,40 @@ If the broker returns null/malformed instead, report only the safe positions_sta
 never its raw account response. An optional field in a public mirrored schema alone does not
 prove that absence means no holdings; more normalization needs approved broker/statement evidence.
 
+## Value-free field shapes for normalization review
+
+The updated probe also emits `balance_shape`, independently of the existing position-data block.
+It describes ONLY the `currentBalances` container and13 FIXED field names: cashBalance,
+cashAvailableForTrading, cashAvailableForWithdrawal, availableFunds, buyingPower, marginBalance,
+pendingDeposits, cashReceipts, moneyMarketFund, liquidationValue, equity, longMarketValue and
+shortMarketValue. Unknown broker keys are counted but never printed. Nested contents and values
+are not traversed/reflected. No extra request, endpoint, scope or secret access is needed.
+
+The container is omitted/null/object/array/scalar. Known fields use fixed shape labels, e.g.
+`plain_decimal`, `exponent_decimal`, `omitted`, `null`, `other_text`, `boolean`, `object`, `array`
+or `other`. `plain_decimal` means only an exact parsed lexeme has bounded plain-decimal syntax;
+it does NOT reveal whether it is zero/positive/negative, guarantee the broker sent a JSON number,
+identify settled funds or establish availability/completeness. No monetary value or account/
+instrument identifier is included. Ordinary request parsing remains strict; diagnostics do not
+weaken numeric, token admission or account/data validation rules.
+
+A safe synthetic fragment is:
+
+```json
+{"container":"object","fields":{"cashBalance":"plain_decimal","marginBalance":"null","buyingPower":"plain_decimal"},"amounts_disclosed":false,"settled_cash_inferred":false}
+```
+
+Actual diagnostics list all13 fixed fields and a count of unrecognized names. Missing balances
+produce no default cash amount. Positions remain unknown if omitted, reported balances/cash null,
+all flags false and no raw partial response is archived. Shape labels may be retained with the
+safe private probe report; they never authorize a proposal or become a normalized portfolio.
+
+Once cached access works, identical probe/login repetition does not resolve data semantics.
+For the NEXT investigation only, run the updated `probe --live` to obtain this new shape block
+and share only it/safe error metadata, not raw responses or amounts. Validate any future cash/
+position mapping against the approved broker documentation and appropriate private statement/
+opening-state evidence; do not use a generic missing=>[]/zero or buying-power-as-cash fallback.
+
 ## Callback compatibility and private troubleshooting
 
 Schwab can add a `session` query parameter to its landing URL, as shown in this

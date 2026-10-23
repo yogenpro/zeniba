@@ -28,6 +28,10 @@ flags; no raw unknown response archive. Null/malformed, visible order/restrictio
 other data failures do not gain the exception. A completed connection/exit0 is not a portfolio
 validation pass. Public tests/fixtures remain synthetic. Live-test results and operator
 configuration stay private. See STATUS for source/test evidence and actual live-call count.
+`balance_shape` is notation/presence metadata for13 FIXED names, never amounts/zero/sign or
+settled-cash validation. Unknown names/values/nested data are not echoed. It cannot change token
+admission/data gates or support a readiness claim. No extra endpoint or real-payload inspection
+by an agent is authorized just because cached access works.
 
 ## Scope and confidentiality
 

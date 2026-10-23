@@ -3,6 +3,7 @@ import { requireSafe } from '../../errors';
 import { parseBrokerJson } from '../../json';
 import type { Clock, Transport } from '../../types';
 import { ACCOUNT_NUMBERS_URL, SCHWAB_ORIGIN, observeRequest, schwabText } from './transport';
+import { balanceShape, type BalanceShape } from './shape';
 
 export interface SchwabSelection {
   expected_account_number: string; expected_account_type: 'MARGIN' | 'CASH'; account_ref: string;
@@ -13,6 +14,7 @@ export interface EmptyProbe {
   positions_reported: number | null; expected_account_type: 'MARGIN' | 'CASH';
   connection_status: 'unverified' | 'verified_single_account';
   positions_state: 'unverified' | 'omitted' | 'null' | 'malformed' | 'empty' | 'nonempty';
+  balance_shape: BalanceShape | null;
   data_certified: false; account_state_certified: false;
   account_cutoff_verified: false; open_orders_verified: false; history_verified: false;
   settled_cash: null; buying_power_used_as_cash: false; broker_execution_enabled: false; provider_called: false;
@@ -48,7 +50,7 @@ export class SchwabObserver {
     requireSafe(Number.isSafeInteger(now), 'invalid_schwab_clock', 503);
     const report: EmptyProbe = { schema: 'zeniba.schwab-probe.v1', account_ref: this.selection.account_ref,
       observed_at: new Date(now).toISOString(), status: 'blocked', blocks: [], reported_balances: null, positions_reported: null,
-      connection_status: 'unverified', positions_state: 'unverified',
+      connection_status: 'unverified', positions_state: 'unverified', balance_shape: null,
       expected_account_type: this.selection.expected_account_type, data_certified: false, account_state_certified: false,
       account_cutoff_verified: false,
       open_orders_verified: false, history_verified: false, settled_cash: null, buying_power_used_as_cash: false,
@@ -59,6 +61,8 @@ export class SchwabObserver {
     requireSafe(account.accountNumber === this.selection.expected_account_number, 'schwab_account_identity_mismatch', 409);
     if (account.type !== this.selection.expected_account_type) return blocked('schwab_account_type_mismatch');
     report.connection_status = 'verified_single_account';
+    // Independent notation/presence labels, not validation of balances or settled funds.
+    report.balance_shape = balanceShape(account);
     report.positions_state = !Object.hasOwn(account, 'positions') ? 'omitted' : account.positions === null ? 'null'
       : !Array.isArray(account.positions) ? 'malformed' : account.positions.length === 0 ? 'empty' : 'nonempty';
     // Visible restrictions/orders still block token-retention admission, even if positions

@@ -84,6 +84,22 @@ test('visible orders or account restrictions still block before an omitted-posit
     assert.equal(result.raw_empty_account, null);
   }
 });
+test('shape diagnostics do not change readiness results or read details for another account', async () => {
+  const value: any = account(); delete value.securitiesAccount.positions;
+  value.securitiesAccount.currentBalances.buyingPower = 'toy-sensitive-amount';
+  value.securitiesAccount.currentBalances['toy-sensitive-key'] = 'toy-sensitive-value';
+  const { observer, calls } = observe(JSON.stringify(value)); const result = await observer.probe(access);
+  assert.equal(result.report.status, 'blocked'); assert.deepEqual(result.report.blocks, ['schwab_positions_not_explicit']);
+  assert.equal(result.report.balance_shape!.container, 'object');
+  assert.equal(result.report.balance_shape!.fields!.buyingPower, 'other_text');
+  assert.equal(result.report.balance_shape!.unrecognized_field_count, 1);
+  assert.equal(JSON.stringify(result.report.balance_shape).includes('sensitive'), false);
+  assert.equal(result.report.reported_balances, null); assert.equal(result.report.settled_cash, null);
+  assert.equal(result.raw_empty_account, null); assert.equal(result.report.data_certified, false); assert.equal(calls.length, 2);
+  const wrong = observe(JSON.stringify(value), '[]');
+  await assert.rejects(wrong.observer.probe(access), code('schwab_single_account_consent_required'));
+  assert.equal(wrong.calls.length, 1);
+});
 test('unexpected holdings block even when quantities/market values are zero', async () => {
   const value = account(); value.securitiesAccount.positions = [{ instrument: { symbol: 'TOY1' }, longQuantity: 0 }];
   const result = await observe(JSON.stringify(value)).observer.probe(access);
