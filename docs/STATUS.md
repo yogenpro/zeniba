@@ -1,5 +1,16 @@
 # Resume status
 
+## Development dependency security fixes — 2026-10-23
+
+Retain the reviewed direct tool/runtime pins and override Miniflare’s transitive
+`sharp` to0.35.5 and `undici` to7.29.1. The public dependency audit reports zero
+advisories; typecheck/build and all51 synthetic tests pass with the compatible
+local workerd wrapper. These are local development/test dependencies; no hosted
+application deployment or provider/broker/account integration changed.
+
+Next step: retain the existing mock-only operational boundaries and remove the
+overrides only when the direct tool releases resolve patched versions themselves.
+
 ## Authorized mock-only Workers deployment — 2026-10-21
 
 Deployed the reviewed, tested mock app at **https://zeniba.yogenpro.com**, behind owner-only

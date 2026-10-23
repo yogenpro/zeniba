@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.0.0 <25" },
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
   "scripts": {
     "generate": "tsx scripts/generate.ts",
     "typecheck": "npm run generate && tsc --noEmit",
@@ -25,5 +27,11 @@
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "wrangler": "4.151.2"
+  },
+  "overrides": {
+    "miniflare": {
+      "sharp": "0.35.5",
+      "undici": "7.29.1"
+    }
   }
 }
