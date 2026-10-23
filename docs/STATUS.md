@@ -15,6 +15,8 @@ shell quoting/controller handoff tests). Domain/egress/OAuth/observer/token-stor
 Worker routes/config remain unchanged by this follow-up. No real operator config/token/auth-file
 contents are read for tests or diagnosis; no agent-initiated broker login/API call. This is
 synthetic verification, not proof that an owner completed a live consent/account observation.
+The branch also incorporates current main's independently scoped development-security overrides
+below, preserving the earlier probe commits/evidence rather than rewriting their source identity.
 
 ## Observation-only controller probe — offline implementation (2026-10-22)
 
@@ -63,6 +65,17 @@ pastes the final callback into the hidden terminal, never chat. Schema gaps rema
 need approved API documentation/review; do not relax them just to get a green empty result.
 Hosted integration, histories/claims/settlement, backup restore, monitoring and private-provider
 transport/current inputs remain separate gates. This probe is not a real-capital pilot.
+
+## Development dependency security fixes — 2026-10-23
+
+Retain the reviewed direct tool/runtime pins and override Miniflare’s transitive
+`sharp` to0.35.5 and `undici` to7.29.1. The public dependency audit reports zero
+advisories; typecheck/build and all51 synthetic tests pass with the compatible
+local workerd wrapper. These are local development/test dependencies; no hosted
+application deployment or provider/broker/account integration changed.
+
+Next step: retain the existing mock-only operational boundaries and remove the
+overrides only when the direct tool releases resolve patched versions themselves.
 
 ## Authorized mock-only Workers deployment — 2026-10-21
 
